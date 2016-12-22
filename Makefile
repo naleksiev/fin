@@ -1,6 +1,6 @@
 .build/fin.o: test/fin.c src/*.h src/*.c
 	mkdir -p .build
-	$(CC) -Os test/fin.c src/*.c -o .build/fin.o
+	$(CC) -Os -std=c99 test/fin.c src/*.c -o .build/fin.o
 
 all: .build/fin.o
 
