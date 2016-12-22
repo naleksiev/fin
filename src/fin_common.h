@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_COMMON_H__
 #define __FIN_COMMON_H__
 
@@ -23,3 +28,4 @@
 typedef void* (*fin_alloc)(void* ptr, unsigned int size);
 
 #endif //#ifndef __FIN_COMMON_H__
+

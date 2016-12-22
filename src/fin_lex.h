@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_LEX_H__
 #define __FIN_LEX_H__
 
@@ -91,3 +96,4 @@ fin_str*     fin_lex_consume_name(fin_lex* lex);
 void         fin_lex_consume_name_to(fin_lex* lex, char* buffer);
 
 #endif //#ifndef __FIN_LEX_H__
+

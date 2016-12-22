@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #include "fin_time.h"
 #include "fin_mod.h"
 #include <time.h>
@@ -13,3 +18,4 @@ void fin_time_register(fin_ctx* ctx) {
 
     fin_mod_create(ctx, "time", descs, FIN_COUNT_OF(descs));
 }
+

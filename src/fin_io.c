@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #include "fin_io.h"
 #include "fin_str.h"
 #include "fin_mod.h"
@@ -28,3 +33,4 @@ void fin_io_register(fin_ctx* ctx) {
 
     fin_mod_create(ctx, "io", descs, FIN_COUNT_OF(descs));
 }
+

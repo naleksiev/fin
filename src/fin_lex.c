@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #include "fin_lex.h"
 #include "fin_val.h"
 #include "fin_str.h"

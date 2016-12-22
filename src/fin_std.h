@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_STD_H__
 #define __FIN_STD_H__
 
@@ -8,3 +13,4 @@ typedef struct fin_ctx fin_ctx;
 void fin_std_register(fin_ctx* ctx);
 
 #endif //#ifndef __FIN_STD_H__
+

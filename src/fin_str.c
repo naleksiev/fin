@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #include "fin_str.h"
 
 typedef struct fin_str {
@@ -140,3 +145,4 @@ const char* fin_str_cstr(fin_str* str) {
 int32_t fin_str_len(fin_str* str) {
     return str->len;
 }
+

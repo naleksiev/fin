@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #include "fin_ast.h"
 #include "fin_val.h"
 #include "fin_lex.h"
@@ -539,7 +544,7 @@ fin_ast_module* fin_ast_parse(fin_alloc alloc, fin_str_pool* pool, const char* s
 
     fin_ast_func*  funcs = NULL;
     fin_ast_func** func_tail = &funcs;
-    
+
     fin_ast_type*  types = NULL;
     fin_ast_type** type_tail = &types;
 

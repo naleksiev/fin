@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_STR_H__
 #define __FIN_STR_H__
 
@@ -14,3 +19,4 @@ const char*   fin_str_cstr(fin_str* str);
 int32_t       fin_str_len(fin_str* str);
 
 #endif //#ifndef __FIN_STR_H__
+

@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_MOD_H__
 #define __FIN_MOD_H__
 
@@ -51,3 +56,4 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr);
 void    fin_mod_destroy(fin_ctx* ctx, fin_mod* mod);
 
 #endif //#ifndef __FIN_MOD_H__
+

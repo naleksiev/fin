@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_OBJ_H__
 #define __FIN_OBJ_H__
 
@@ -13,3 +18,4 @@ fin_obj* fin_obj_create(fin_alloc alloc, int32_t fields);
 void     fin_obj_destroy(fin_obj* obj);
 
 #endif //#ifndef __FIN_OBJ_H__
+

@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_OP_H__
 #define __FIN_OP_H__
 
@@ -16,3 +21,4 @@ typedef enum fin_op {
 } fin_op;
 
 #endif //#ifndef __FIN_OP_H__
+

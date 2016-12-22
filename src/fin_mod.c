@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #include "fin_mod.h"
 #include "fin_ctx.h"
 #include "fin_ast.h"
@@ -523,7 +528,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
         funcs[i].code = NULL;
         funcs[i].code_length = 0;
         funcs[i].args = 0;
-        
+
         // ret_type name "(" (arg ("," arg)* )? ")"
         fin_lex* lex = fin_lex_create(ctx->alloc, ctx->pool, descs[i].sign);
 
@@ -583,7 +588,7 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
 
     if (mod->types_count) {
         mod->types = (fin_mod_type*)ctx->alloc(NULL, sizeof(fin_mod_type) * mod->types_count);
-        
+
         int32_t idx = 0;
         for (fin_ast_type* type = module->types; type; type = type->next)
             fin_mod_compile_type(&mod->types[idx++], type);
@@ -638,3 +643,4 @@ void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
     fin_mod_unregister(ctx, mod);
     free(mod);
 }
+

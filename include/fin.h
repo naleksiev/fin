@@ -1,3 +1,8 @@
+/*
+ * Copyright 2016 Nikolay Aleksiev. All rights reserved.
+ * License: https://github.com/naleksiev/fin/blob/master/LICENSE
+ */
+
 #ifndef __FIN_H__
 #define __FIN_H__
 
@@ -20,3 +25,4 @@ void     fin_ctx_eval_file(fin_ctx* ctx, const char* path);
 #endif
 
 #endif //#ifndef __FIN_H__
+
