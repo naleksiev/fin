@@ -76,5 +76,5 @@ void fin_ctx_eval_file(fin_ctx* ctx, const char* path) {
 
     fin_ctx_eval_str(ctx, buffer);
 
-    free(buffer);
+    ctx->alloc(buffer, 0);
 }

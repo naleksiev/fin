@@ -641,6 +641,6 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
 
 void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
     fin_mod_unregister(ctx, mod);
-    free(mod);
+    ctx->alloc(mod, 0);
 }
 
