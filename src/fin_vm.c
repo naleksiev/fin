@@ -44,12 +44,9 @@ typedef struct fin_vm_stack {
     fin_val  stash[64];
 } fin_vm_stack;
 
-typedef struct fin_vm_fiber {
-    fin_vm_stack      stack;
-} fin_vm_fiber;
-
 typedef struct fin_vm {
-    fin_vm_fiber fib; // ????
+    fin_vm_stack stack;
+    fin_alloc    alloc;
 } fin_vm;
 
 void fin_vm_invoke_int(fin_mod_func* func, fin_val* stack);
@@ -121,11 +118,16 @@ void fin_vm_interpret(fin_mod* mod, uint8_t* ip, fin_val* stack, fin_val* args, 
     FIN_VM_LOOP_END();
 }
 
-fin_vm* fin_vm_create(fin_ctx* ctx) {
-    fin_vm* vm = (fin_vm*)ctx->alloc(NULL, sizeof(fin_vm));
-    vm->fib.stack.begin = vm->fib.stack.stash;
-    vm->fib.stack.top = vm->fib.stack.begin;
+fin_vm* fin_vm_create(fin_alloc alloc) {
+    fin_vm* vm = (fin_vm*)alloc(NULL, sizeof(fin_vm));
+    vm->stack.begin = vm->stack.stash;
+    vm->stack.top = vm->stack.begin;
+    vm->alloc = alloc;
     return vm;
+}
+
+void fin_vm_destroy(fin_vm* vm) {
+    vm->alloc(vm, 0);
 }
 
 inline void fin_vm_invoke_int(fin_mod_func* func, fin_val* stack) {
@@ -136,10 +138,6 @@ inline void fin_vm_invoke_int(fin_mod_func* func, fin_val* stack) {
 }
 
 void fin_vm_invoke(fin_vm* vm, fin_mod_func* func) {
-    fin_vm_invoke_int(func, vm->fib.stack.top);
-}
-
-void fin_vm_destroy(fin_vm* vm) {
-    free(vm);
+    fin_vm_invoke_int(func, vm->stack.top);
 }
 
