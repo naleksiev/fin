@@ -4,8 +4,8 @@
  */
 
 #include "fin_io.h"
-#include "fin_str.h"
-#include "fin_mod.h"
+#include "../fin_str.h"
+#include "../fin_mod.h"
 
 static void fin_io_write(fin_val* args) {
     printf("%s", fin_str_cstr(args[0].s));

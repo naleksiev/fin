@@ -1,6 +1,6 @@
-.build/fin.o: test/fin.c src/*.h src/*.c
+.build/fin.o: test/fin.c src/*.h src/*.c src/mod/*.h src/mod/*.c
 	mkdir -p .build
-	$(CC) -Os -std=c99 test/fin.c src/*.c -o .build/fin.o -lm -Wno-typedef-redefinition
+	$(CC) -Os -std=c99 test/fin.c src/*.c src/mod/*.c -o .build/fin.o -lm -Wno-typedef-redefinition
 
 all: .build/fin.o
 

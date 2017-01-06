@@ -7,11 +7,11 @@
 #include "fin_mod.h"
 #include "fin_val.h"
 #include "fin_vm.h"
-#include "fin_io.h"
-#include "fin_math.h"
-#include "fin_time.h"
-#include "fin_std.h"
 #include "fin_str.h"
+#include "mod/fin_io.h"
+#include "mod/fin_math.h"
+#include "mod/fin_time.h"
+#include "mod/fin_std.h"
 
 static void* fin_allocator(void* ptr, unsigned int size) {
     if (ptr) {

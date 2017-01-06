@@ -4,7 +4,7 @@
  */
 
 #include "fin_std.h"
-#include "fin_mod.h"
+#include "../fin_mod.h"
 
 static void fin_std_int_add(fin_val* args) { args[0].i = args[0].i  + args[1].i; }
 static void fin_std_int_sub(fin_val* args) { args[0].i = args[0].i  - args[1].i; }

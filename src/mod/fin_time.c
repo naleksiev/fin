@@ -4,7 +4,7 @@
  */
 
 #include "fin_time.h"
-#include "fin_mod.h"
+#include "../fin_mod.h"
 #include <time.h>
 
 static void fin_time_clock(fin_val* args) {

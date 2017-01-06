@@ -4,7 +4,7 @@
  */
 
 #include "fin_math.h"
-#include "fin_mod.h"
+#include "../fin_mod.h"
 #include <math.h>
 
 static void fin_math_abs_int(fin_val* args)    { if (args[0].i < 0) args[0].i = -args[0].i; }
