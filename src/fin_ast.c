@@ -673,6 +673,7 @@ static void fin_ast_param_destroy(fin_ast_module* mod, fin_ast_param* param) {
     if (!param)
         return;
     fin_ast_param_destroy(mod, param->next);
+    fin_ast_type_ref_destroy(mod, param->type);
     fin_str_destroy(mod->pool, param->name);
     mod->alloc(param, 0);
 }
