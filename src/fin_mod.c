@@ -651,6 +651,7 @@ void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
         fin_mod_func_bind* bind = &mod->binds[i];
         fin_str_destroy(ctx->pool, bind->sign);
     }
+    ctx->alloc(mod->funcs, 0);
     ctx->alloc(mod, 0);
 }
 
