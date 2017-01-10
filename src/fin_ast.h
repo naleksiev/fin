@@ -222,7 +222,7 @@ typedef struct fin_ast_field {
 } fin_ast_field;
 
 typedef struct fin_ast_param {
-    fin_str*          name;
+    fin_str*              name;
     fin_ast_type_ref*     type;
     struct fin_ast_param* next;
 } fin_ast_param;
@@ -242,12 +242,14 @@ typedef struct fin_ast_type {
 } fin_ast_type;
 
 typedef struct fin_ast_module {
+    fin_alloc     alloc;
+    fin_str_pool* pool;
     fin_str*      name;
     fin_ast_type* types;
     fin_ast_func* funcs;
 } fin_ast_module;
 
 fin_ast_module* fin_ast_parse(fin_alloc alloc, fin_str_pool* pool, const char* str);
-void            fin_ast_destroy(fin_ast_module* module);
+void            fin_ast_destroy(fin_ast_module* mod);
 
 #endif // #ifndef __FIN_AST_H__

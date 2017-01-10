@@ -82,7 +82,7 @@ fin_str_pool* fin_str_pool_create(fin_alloc alloc) {
 
 void fin_str_pool_destroy(fin_str_pool* pool) {
     //temp
-/*
+    /*
     if (pool->count) {
         for (int32_t i=0; i<pool->capacity; i++) {
             fin_str_entry* entry = &pool->entries[i];
@@ -91,7 +91,8 @@ void fin_str_pool_destroy(fin_str_pool* pool) {
         }
         assert(pool->count == 0);
     }
-*/
+    */
+
     if (pool->entries)
         pool->alloc(pool->entries, 0);
     pool->alloc(pool, 0);
@@ -136,6 +137,11 @@ void fin_str_destroy(fin_str_pool* pool, fin_str* str) {
         pool->entries[str->slot].hash = 1;
         pool->alloc(str, 0);
     }
+}
+
+fin_str* fin_str_clone(fin_str* str) {
+    str->ref++;
+    return str;
 }
 
 const char* fin_str_cstr(fin_str* str) {

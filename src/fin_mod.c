@@ -481,8 +481,8 @@ static void fin_mod_compile_type(fin_mod_type* out_type, fin_ast_type* type) {
         fields++;
         field = field->next;
     }
-
-    *out_type = (fin_mod_type){ .name = type->name, .fields = fields };
+    out_type->name = fin_str_clone(type->name);
+    out_type->fields = fields;
 }
 
 static void fin_mod_register(fin_ctx* ctx, fin_mod* mod) {
@@ -509,17 +509,16 @@ static void fin_mod_register(fin_ctx* ctx, fin_mod* mod) {
     }
 }
 
-static void fin_mod_unregister(fin_ctx* ctx, fin_mod* mod) {
-
-}
-
 fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs, int32_t descs_count) {
-    fin_str* mod_name = fin_str_create(ctx->pool, name, -1);
-
     fin_mod_func* funcs = (fin_mod_func*)ctx->alloc(NULL, sizeof(fin_mod_func) * descs_count);
 
     fin_mod* mod = (fin_mod*)ctx->alloc(NULL, sizeof(fin_mod));
-    *mod = (fin_mod){ .name = mod_name, .funcs = funcs, .funcs_count = descs_count, .next = NULL };
+    mod->name = fin_str_create(ctx->pool, name, -1);
+    mod->funcs = funcs;
+    mod->funcs_count = descs_count;
+    mod->binds = NULL;
+    mod->binds_count = 0;
+    mod->next = NULL;
 
     for (int32_t i=0; i<descs_count; i++) {
         funcs[i].mod = mod;
@@ -562,7 +561,6 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
 
         fin_lex_destroy(lex);
     }
-
 
     fin_mod_register(ctx, mod);
     return mod;
@@ -640,7 +638,19 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
 }
 
 void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
-    fin_mod_unregister(ctx, mod);
+    if (mod->name)
+        fin_str_destroy(ctx->pool, mod->name);
+    for (int32_t i=0; i<mod->funcs_count; i++) {
+        fin_mod_func* func = &mod->funcs[i];
+        if (func->ret_type)
+            fin_str_destroy(ctx->pool, func->ret_type);
+        ctx->alloc(func->code, 0);
+        fin_str_destroy(ctx->pool, func->sign);
+    }
+    for (int32_t i=0; i<mod->binds_count; i++) {
+        fin_mod_func_bind* bind = &mod->binds[i];
+        fin_str_destroy(ctx->pool, bind->sign);
+    }
     ctx->alloc(mod, 0);
 }
 

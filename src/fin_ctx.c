@@ -46,6 +46,13 @@ fin_ctx* fin_ctx_create_default() {
 }
 
 void fin_ctx_destroy(fin_ctx* ctx) {
+    fin_mod* mod = ctx->mod;
+    while (mod) {
+        fin_mod* tmp = mod;
+        mod = mod->next;
+        fin_mod_destroy(ctx, tmp);
+    }
+
     fin_str_pool_destroy(ctx->pool);
     ctx->alloc(ctx, 0);
 }

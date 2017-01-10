@@ -15,6 +15,7 @@ fin_str_pool* fin_str_pool_create(fin_alloc alloc);
 void          fin_str_pool_destroy(fin_str_pool* pool);
 fin_str*      fin_str_create(fin_str_pool* pool, const char* str, int32_t len);
 void          fin_str_destroy(fin_str_pool* pool, fin_str* str);
+fin_str*      fin_str_clone(fin_str* str);
 const char*   fin_str_cstr(fin_str* str);
 int32_t       fin_str_len(fin_str* str);
 
