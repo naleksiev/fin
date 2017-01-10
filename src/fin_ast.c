@@ -575,6 +575,13 @@ fin_ast_module* fin_ast_parse(fin_alloc alloc, fin_str_pool* pool, const char* s
     return module;
 }
 
+static void fin_ast_type_ref_destroy(fin_ast_module* mod, fin_ast_type_ref* type) {
+    fin_str_destroy(mod->pool, type->name);
+    if (type->module)
+        fin_str_destroy(mod->pool, type->module);
+    mod->alloc(type, 0);
+}
+
 static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
     if (!expr)
         return;
@@ -677,6 +684,7 @@ static void fin_ast_func_destroy(fin_ast_module* mod, fin_ast_func* func) {
     fin_str_destroy(mod->pool, func->name);
     fin_ast_param_destroy(mod, func->params);
     fin_ast_stmt_destroy(mod, &func->block->base);
+    fin_ast_type_ref_destroy(mod, func->ret);
     mod->alloc(func, 0);
 }
 
