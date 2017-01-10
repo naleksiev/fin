@@ -517,6 +517,8 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
     mod->funcs_count = descs_count;
     mod->binds = NULL;
     mod->binds_count = 0;
+    mod->consts = NULL;
+    mod->consfin_count = 0;
     mod->next = NULL;
 
     for (int32_t i=0; i<descs_count; i++) {
