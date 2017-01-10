@@ -7,8 +7,6 @@
 #include "fin_val.h"
 #include "fin_str.h"
 
-static const int32_t fin_lex_max_cache = 4;
-
 static const struct {
     const char* token;
     fin_lex_type type;
