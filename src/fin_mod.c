@@ -335,7 +335,6 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 fin_mod_compile_expr(ctx, cmp, &e->base, NULL);
 
             fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr, primary);
-
             int16_t idx = fin_mod_bind_idx(cmp, sign);
             fin_mod_emit_uint8(cmp, fin_op_call);
             fin_mod_emit_uint16(cmp, idx);
@@ -647,9 +646,15 @@ void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
         ctx->alloc(func->code, 0);
         fin_str_destroy(ctx->pool, func->sign);
     }
-    for (int32_t i=0; i<mod->binds_count; i++) {
-        fin_mod_func_bind* bind = &mod->binds[i];
-        fin_str_destroy(ctx->pool, bind->sign);
+    if (mod->binds) {
+        for (int32_t i=0; i<mod->binds_count; i++) {
+            fin_mod_func_bind* bind = &mod->binds[i];
+            fin_str_destroy(ctx->pool, bind->sign);
+        }
+        ctx->alloc(mod->binds, 0);
+    }
+    if (mod->consts) {
+        ctx->alloc(mod->consts, 0);
     }
     ctx->alloc(mod->funcs, 0);
     ctx->alloc(mod, 0);
