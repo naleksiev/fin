@@ -22,10 +22,10 @@ static void fin_ast_expect(fin_lex* lex, fin_lex_type type) {
 static fin_ast_type_ref* fin_ast_parse_type_ref(fin_alloc alloc, fin_lex* lex) {
     fin_ast_type_ref* type = (fin_ast_type_ref*)alloc(NULL, sizeof(fin_ast_type_ref));
     type->module = NULL;
-    type->name = fin_str_clone(fin_lex_consume_name(lex));
+    type->name = fin_lex_consume_name(lex);
     if (fin_lex_match(lex, fin_lex_type_dot)) {
         type->module = type->name;
-        type->name = fin_str_clone(fin_lex_consume_name(lex));
+        type->name = fin_lex_consume_name(lex);
     }
     return type;
 }
@@ -42,7 +42,7 @@ static fin_ast_arg_expr* fin_ast_parse_arg_expr(fin_alloc alloc, fin_lex* lex) {
 static fin_ast_expr* fin_ast_parse_id_expr(fin_alloc alloc, fin_lex* lex) {
     fin_ast_id_expr* id_expr = (fin_ast_id_expr*)alloc(NULL, sizeof(fin_ast_id_expr));
     id_expr->base.type = fin_ast_expr_type_id;
-    id_expr->name = fin_str_clone(fin_lex_consume_name(lex));
+    id_expr->name = fin_lex_consume_name(lex);
     return &id_expr->base;
 }
 
@@ -94,7 +94,7 @@ static fin_ast_expr* fin_ast_parse_const_expr(fin_alloc alloc, fin_lex* lex) {
     else if (fin_lex_get_type(lex) == fin_lex_type_string) {
         fin_ast_str_expr* str_expr = (fin_ast_str_expr*)alloc(NULL, sizeof(fin_ast_str_expr));
         str_expr->base.type = fin_ast_expr_type_str;
-        str_expr->value = fin_str_clone(fin_lex_consume_string(lex));
+        str_expr->value = fin_lex_consume_string(lex);
         return &str_expr->base;
     }
     else {
@@ -406,7 +406,7 @@ static fin_ast_stmt* fin_ast_parse_decl_stmt(fin_alloc alloc, fin_lex* lex, fin_
     stmt->base.type = fin_ast_stmt_type_decl;
     stmt->base.next = NULL;
     stmt->type = type;
-    stmt->name = fin_str_clone(fin_lex_consume_name(lex));
+    stmt->name = fin_lex_consume_name(lex);
     stmt->init = fin_lex_match(lex, fin_lex_type_eq) ? fin_ast_parse_expr(alloc, lex) : NULL;
     fin_ast_expect(lex, fin_lex_type_semicolon);
     return &stmt->base;
@@ -483,7 +483,7 @@ static fin_ast_stmt* fin_ast_parse_stmt(fin_alloc alloc, fin_lex* lex) {
 static fin_ast_param* fin_ast_parse_param(fin_alloc alloc, fin_lex* lex) {
     fin_ast_param* param = (fin_ast_param*)alloc(NULL, sizeof(fin_ast_param));
     param->type = fin_ast_parse_type_ref(alloc, lex);
-    param->name = fin_str_clone(fin_lex_consume_name(lex));
+    param->name = fin_lex_consume_name(lex);
     param->next = NULL;
     return param;
 }
@@ -509,7 +509,7 @@ static fin_ast_func* fin_ast_parse_func(fin_alloc alloc, fin_lex* lex, fin_ast_t
 static fin_ast_field* fin_lex_parse_field(fin_alloc alloc, fin_lex* lex) {
     fin_ast_field* field = (fin_ast_field*)alloc(NULL, sizeof(fin_ast_field));
     field->type = fin_ast_parse_type_ref(alloc, lex);
-    field->name = fin_str_clone(fin_lex_consume_name(lex));
+    field->name = fin_lex_consume_name(lex);
     fin_ast_expect(lex, fin_lex_type_semicolon);
     field->next = NULL;
     return field;
@@ -518,7 +518,7 @@ static fin_ast_field* fin_lex_parse_field(fin_alloc alloc, fin_lex* lex) {
 static fin_ast_type* fin_lex_parse_struct(fin_alloc alloc, fin_lex* lex) {
     fin_ast_type* type = (fin_ast_type*)alloc(NULL, sizeof(fin_ast_type));
     fin_ast_expect(lex, fin_lex_type_struct);
-    type->name = fin_str_clone(fin_lex_consume_name(lex));
+    type->name = fin_lex_consume_name(lex);
     fin_ast_expect(lex, fin_lex_type_l_brace);
     fin_ast_field** field_tail = &type->fields;
     *field_tail = NULL;
@@ -556,7 +556,7 @@ fin_ast_module* fin_ast_parse(fin_alloc alloc, fin_str_pool* pool, const char* s
             type_tail = &(*type_tail)->next;
         }
         fin_ast_type_ref* type = fin_ast_parse_type_ref(alloc, lex);
-        fin_str* name = fin_str_clone(fin_lex_consume_name(lex));
+        fin_str* name = fin_lex_consume_name(lex);
         if (fin_lex_get_type(lex) == fin_lex_type_l_paren) {
             *func_tail = fin_ast_parse_func(alloc, lex, type, name);
             func_tail = &(*func_tail)->next;
