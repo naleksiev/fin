@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_LEX_H__
-#define __FIN_LEX_H__
+#ifndef FIN_LEX_H
+#define FIN_LEX_H
 
 #include "fin_common.h"
 
@@ -95,5 +95,5 @@ fin_str*     fin_lex_consume_string(fin_lex* lex);
 fin_str*     fin_lex_consume_name(fin_lex* lex);
 void         fin_lex_consume_name_to(fin_lex* lex, char* buffer);
 
-#endif //#ifndef __FIN_LEX_H__
+#endif //#ifndef FIN_LEX_H
 

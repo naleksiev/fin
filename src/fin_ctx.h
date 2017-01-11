@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_CTX_H__
-#define __FIN_CTX_H__
+#ifndef FIN_CTX_H
+#define FIN_CTX_H
 
 #include "fin_common.h"
 
@@ -25,5 +25,5 @@ void     fin_ctx_destroy(fin_ctx* ctx);
 void     fin_ctx_eval_str(fin_ctx* ctx, const char* cstr);
 void     fin_ctx_eval_file(fin_ctx* ctx, const char* path);
 
-#endif //#ifndef __FIN_CTX_H__
+#endif //#ifndef FIN_CTX_H
 

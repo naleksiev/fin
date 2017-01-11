@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_OP_H__
-#define __FIN_OP_H__
+#ifndef FIN_OP_H
+#define FIN_OP_H
 
 typedef enum fin_op {
     fin_op_load_const,
@@ -20,5 +20,5 @@ typedef enum fin_op {
     fin_op_pop,
 } fin_op;
 
-#endif //#ifndef __FIN_OP_H__
+#endif //#ifndef FIN_OP_H
 

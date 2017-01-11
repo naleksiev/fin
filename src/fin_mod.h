@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_MOD_H__
-#define __FIN_MOD_H__
+#ifndef FIN_MOD_H
+#define FIN_MOD_H
 
 #include "fin_common.h"
 #include "fin_val.h"
@@ -55,5 +55,5 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
 fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr);
 void    fin_mod_destroy(fin_ctx* ctx, fin_mod* mod);
 
-#endif //#ifndef __FIN_MOD_H__
+#endif //#ifndef FIN_MOD_H
 

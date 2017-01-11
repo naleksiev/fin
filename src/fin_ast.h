@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_AST_H__
-#define __FIN_AST_H__
+#ifndef FIN_AST_H
+#define FIN_AST_H
 
 #include "fin_common.h"
 
@@ -252,4 +252,4 @@ typedef struct fin_ast_module {
 fin_ast_module* fin_ast_parse(fin_alloc alloc, fin_str_pool* pool, const char* str);
 void            fin_ast_destroy(fin_ast_module* mod);
 
-#endif // #ifndef __FIN_AST_H__
+#endif // #ifndef FIN_AST_H

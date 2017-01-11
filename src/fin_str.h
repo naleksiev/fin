@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_STR_H__
-#define __FIN_STR_H__
+#ifndef FIN_STR_H
+#define FIN_STR_H
 
 #include "fin_common.h"
 
@@ -19,5 +19,5 @@ void          fin_str_destroy(fin_str_pool* pool, fin_str* str);
 const char*   fin_str_cstr(fin_str* str);
 int32_t       fin_str_len(fin_str* str);
 
-#endif //#ifndef __FIN_STR_H__
+#endif //#ifndef FIN_STR_H
 

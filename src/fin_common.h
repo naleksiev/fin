@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_COMMON_H__
-#define __FIN_COMMON_H__
+#ifndef FIN_COMMON_H
+#define FIN_COMMON_H
 
 #if defined(_MSC_VER)
 #   define FIN_CONFIG_COMPUTED_GOTO 0
@@ -27,5 +27,5 @@
 
 typedef void* (*fin_alloc)(void* ptr, unsigned int size);
 
-#endif //#ifndef __FIN_COMMON_H__
+#endif //#ifndef FIN_COMMON_H
 
