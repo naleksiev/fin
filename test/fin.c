@@ -4,7 +4,6 @@
  */
 
 #include "../include/fin.h"
-#include <stdio.h>
 
 int main(int argc, const char* argv[]) {
     fin_ctx* ctx = fin_ctx_create_default();
