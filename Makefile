@@ -1,6 +1,25 @@
+SANITIZER =
+ifdef ubsan
+	SANITIZER = -fsanitize=undefined
+	NO_RTTI   =
+endif
+ifdef asan
+	SANITIZER = -fsanitize=address
+endif
+ifdef tsan
+	SANITIZER = -fsanitize=thread
+endif
+ifdef msan
+	SANITIZER = -fsanitize=memory
+endif
+
+OPTIMIZE = -O0
+ifdef release
+	OPTIMIZE = -Os
+endif
 .build/fin.o: test/fin.c src/*.h src/*.c src/mod/*.h src/mod/*.c
 	mkdir -p .build
-	$(CC) -Os -std=c99 test/fin.c src/*.c src/mod/*.c -o .build/fin.o -lm -Wno-typedef-redefinition
+	$(CC) $(SANITIZER) $(OPTIMIZE) -std=c99 test/fin.c src/*.c src/mod/*.c -o .build/fin.o -lm -Wno-typedef-redefinition
 
 all: .build/fin.o
 

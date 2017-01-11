@@ -131,17 +131,17 @@ fin_str* fin_str_create(fin_str_pool* pool, const char* cstr, int32_t len) {
     return str;
 }
 
+fin_str* fin_str_clone(fin_str* str) {
+    str->ref++;
+    return str;
+}
+
 void fin_str_destroy(fin_str_pool* pool, fin_str* str) {
     if (--str->ref == 0) {
         pool->entries[str->slot].str = NULL;
         pool->entries[str->slot].hash = 1;
         pool->alloc(str, 0);
     }
-}
-
-fin_str* fin_str_clone(fin_str* str) {
-    str->ref++;
-    return str;
 }
 
 const char* fin_str_cstr(fin_str* str) {
