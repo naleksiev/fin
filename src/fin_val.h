@@ -10,7 +10,6 @@
 
 typedef struct fin_str fin_str;
 typedef struct fin_obj fin_obj;
-typedef struct fin_map fin_map;
 
 typedef union fin_val {
     bool     b;

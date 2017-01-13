@@ -7,7 +7,6 @@
 #define FIN_VM_H
 
 #include "fin_common.h"
-#include "fin_val.h"
 
 typedef struct fin_vm       fin_vm;
 typedef struct fin_mod_func fin_mod_func;
