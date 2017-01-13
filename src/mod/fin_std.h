@@ -3,8 +3,8 @@
  * License: https://github.com/naleksiev/fin/blob/master/LICENSE
  */
 
-#ifndef __FIN_STD_H__
-#define __FIN_STD_H__
+#ifndef FIN_MOD_STD_H
+#define FIN_MOD_STD_H
 
 #include "../fin_common.h"
 
@@ -12,5 +12,5 @@ typedef struct fin_ctx fin_ctx;
 
 void fin_std_register(fin_ctx* ctx);
 
-#endif //#ifndef __FIN_STD_H__
+#endif //#ifndef FIN_MOD_STD_H
 
