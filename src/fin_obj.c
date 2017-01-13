@@ -12,7 +12,8 @@ fin_obj* fin_obj_create(fin_alloc alloc, int32_t fields) {
     return obj;
 }
 
-void fin_obj_destroy(fin_obj* obj) {
-
+void fin_obj_destroy(fin_alloc alloc, fin_obj* obj) {
+    if (obj)
+        alloc(obj, 0);
 }
 
