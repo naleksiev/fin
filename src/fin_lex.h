@@ -7,9 +7,7 @@
 #define FIN_LEX_H
 
 #include "fin_common.h"
-
-typedef struct fin_str      fin_str;
-typedef struct fin_str_pool fin_str_pool;
+#include "fin_str.h"
 
 typedef enum fin_lex_type {
     fin_lex_type_bool,

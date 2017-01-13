@@ -8,6 +8,7 @@
 
 #include "fin_common.h"
 #include "fin_val.h"
+#include "fin_str.h"
 
 typedef struct fin_ast_module fin_ast_module;
 typedef struct fin_ctx        fin_ctx;

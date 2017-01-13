@@ -7,11 +7,7 @@
 #define FIN_AST_H
 
 #include "fin_common.h"
-
-typedef struct fin_ctx      fin_ctx;
-typedef struct fin_str      fin_str;
-typedef struct fin_str_pool fin_str_pool;
-typedef struct fin_ast_expr fin_ast_expr;
+#include "fin_str.h"
 
 typedef struct fin_ast_type_ref {
     fin_str* module;

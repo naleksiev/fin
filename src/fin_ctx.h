@@ -8,15 +8,15 @@
 
 #include "fin_common.h"
 
-typedef struct fin_mod      fin_mod;
-typedef struct fin_str_pool fin_str_pool;
+struct fin_mod;
+struct fin_str_pool;
 
 typedef void* (*fin_ctx_alloc)(void* ptr, unsigned int size);
 
 typedef struct fin_ctx {
-    fin_ctx_alloc alloc;
-    fin_mod*      mod;
-    fin_str_pool* pool;
+    fin_ctx_alloc        alloc;
+    struct fin_str_pool* pool;
+    struct fin_mod*      mod;
 } fin_ctx;
 
 fin_ctx* fin_ctx_create(fin_ctx_alloc alloc);
