@@ -612,12 +612,22 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
             break;
         }
         case fin_ast_expr_type_unary: {
+            fin_ast_unary_expr* un_expr = (fin_ast_unary_expr*)expr;
+            fin_ast_expr_destroy(mod, un_expr->expr);
             break;
         }
         case fin_ast_expr_type_binary: {
+            fin_ast_binary_expr* bin_expr = (fin_ast_binary_expr*)expr;
+            fin_ast_expr_destroy(mod, bin_expr->lhs);
+            fin_ast_expr_destroy(mod, bin_expr->rhs);
             break;
         }
         case fin_ast_expr_type_cond: {
+            fin_ast_cond_expr* cond_expr = (fin_ast_cond_expr*)expr;
+            fin_ast_expr_destroy(mod, cond_expr->cond);
+            fin_ast_expr_destroy(mod, cond_expr->true_expr);
+            if (cond_expr->false_expr)
+                fin_ast_expr_destroy(mod, cond_expr->false_expr);
             break;
         }
         case fin_ast_expr_type_arg: {
@@ -632,6 +642,9 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
             break;
         }
         case fin_ast_expr_type_assign: {
+            fin_ast_assign_expr* assign_expr = (fin_ast_assign_expr*)expr;
+            fin_ast_expr_destroy(mod, assign_expr->lhs);
+            fin_ast_expr_destroy(mod, assign_expr->rhs);
             break;
         }
     }
@@ -649,6 +662,8 @@ static void fin_ast_stmt_destroy(fin_ast_module* mod, fin_ast_stmt* stmt) {
             break;
         }
         case fin_ast_stmt_type_ret: {
+            fin_ast_ret_stmt* ret_stmt = (fin_ast_ret_stmt*)stmt;
+            fin_ast_expr_destroy(mod, ret_stmt->expr);
             break;
         }
         case fin_ast_stmt_type_if: {
