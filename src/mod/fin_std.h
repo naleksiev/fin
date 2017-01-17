@@ -6,9 +6,7 @@
 #ifndef FIN_MOD_STD_H
 #define FIN_MOD_STD_H
 
-#include "../fin_common.h"
-
-typedef struct fin_ctx fin_ctx;
+#include <fin/fin.h>
 
 void fin_std_register(fin_ctx* ctx);
 

@@ -10,12 +10,12 @@
 extern "C" {
 #endif
 
-typedef struct fin_ctx fin_ctx;
-
 // alloc:   ptr == NULL, size > 0
 // realloc: ptr != NULL, size > 0
 // free:    ptr != NULL, size == 0
 typedef void* (*fin_alloc)(void* ptr, unsigned int size);
+
+typedef struct fin_ctx fin_ctx;
 
 fin_ctx* fin_ctx_create_default();
 fin_ctx* fin_ctx_create(fin_alloc alloc);
