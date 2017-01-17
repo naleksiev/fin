@@ -17,9 +17,9 @@ typedef struct fin_mod        fin_mod;
 typedef struct fin_mod_type   fin_mod_type;
 
 typedef struct fin_mod_func {
-    fin_mod*     mod;
-    fin_str*     ret_type;
-    fin_str*     sign;
+    fin_mod*    mod;
+    fin_str*    ret_type;
+    fin_str*    sign;
     void        (*func)(fin_val* args);
     bool        is_native;
     uint8_t*    code;
