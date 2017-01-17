@@ -4,8 +4,10 @@
  */
 
 #include "fin_lex.h"
-#include "fin_val.h"
 #include "fin_str.h"
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
 static const struct {
     const char* token;

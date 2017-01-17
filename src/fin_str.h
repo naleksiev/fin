@@ -6,7 +6,7 @@
 #ifndef FIN_STR_H
 #define FIN_STR_H
 
-#include "fin_common.h"
+#include <fin/fin.h>
 
 typedef struct fin_str      fin_str;
 typedef struct fin_str_pool fin_str_pool;

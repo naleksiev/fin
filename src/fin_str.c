@@ -4,6 +4,8 @@
  */
 
 #include "fin_str.h"
+#include <assert.h>
+#include <string.h>
 
 typedef struct fin_str {
     int32_t ref;

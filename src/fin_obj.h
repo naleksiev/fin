@@ -6,8 +6,7 @@
 #ifndef FIN_OBJ_H
 #define FIN_OBJ_H
 
-#include "fin_common.h"
-#include "fin_val.h"
+#include <fin/fin.h>
 
 typedef struct fin_obj {
     int32_t ref;

@@ -4,9 +4,9 @@
  */
 
 #include "fin_ast.h"
-#include "fin_val.h"
 #include "fin_lex.h"
 #include "fin_str.h"
+#include <assert.h>
 
 static fin_ast_expr* fin_ast_parse_expr(fin_alloc alloc, fin_lex* lex);
 static fin_ast_stmt* fin_ast_parse_stmt(fin_alloc alloc, fin_lex* lex);

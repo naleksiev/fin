@@ -6,7 +6,6 @@
 #ifndef FIN_AST_H
 #define FIN_AST_H
 
-#include "fin_common.h"
 #include "fin_str.h"
 
 typedef struct fin_ast_type_ref {

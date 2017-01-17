@@ -5,7 +5,6 @@
 
 #include "fin_vm.h"
 #include "fin_ctx.h"
-#include "fin_val.h"
 #include "fin_obj.h"
 #include "fin_op.h"
 #include "fin_mod.h"

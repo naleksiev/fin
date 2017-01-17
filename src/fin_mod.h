@@ -6,9 +6,7 @@
 #ifndef FIN_MOD_H
 #define FIN_MOD_H
 
-#include "fin_common.h"
-#include "fin_val.h"
-#include "fin_str.h"
+#include <fin/fin.h>
 
 typedef struct fin_ast_module fin_ast_module;
 typedef struct fin_ctx        fin_ctx;

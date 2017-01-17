@@ -6,8 +6,7 @@
 #ifndef FIN_LEX_H
 #define FIN_LEX_H
 
-#include "fin_common.h"
-#include "fin_str.h"
+#include <fin/fin.h>
 
 typedef enum fin_lex_type {
     fin_lex_type_bool,
@@ -78,6 +77,7 @@ typedef enum fin_lex_type {
 } fin_lex_type;
 
 typedef struct fin_lex fin_lex;
+typedef struct fin_str_pool fin_str_pool;
 
 fin_lex*     fin_lex_create(fin_alloc alloc, fin_str_pool* pool, const char* cstr);
 void         fin_lex_destroy(fin_lex* lex);

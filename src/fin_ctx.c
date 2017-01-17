@@ -5,13 +5,15 @@
 
 #include "fin_ctx.h"
 #include "fin_mod.h"
-#include "fin_val.h"
 #include "fin_vm.h"
 #include "fin_str.h"
 #include "mod/fin_io.h"
 #include "mod/fin_math.h"
 #include "mod/fin_time.h"
 #include "mod/fin_std.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 static void* fin_allocator(void* ptr, unsigned int size) {
     if (ptr) {

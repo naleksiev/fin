@@ -6,7 +6,7 @@
 #ifndef FIN_CTX_H
 #define FIN_CTX_H
 
-#include "fin_common.h"
+#include <fin/fin.h>
 
 struct fin_mod;
 struct fin_str_pool;

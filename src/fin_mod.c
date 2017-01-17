@@ -9,6 +9,9 @@
 #include "fin_op.h"
 #include "fin_lex.h"
 #include "fin_str.h"
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
 #define FIN_LOG(...) printf(__VA_ARGS__)
 //#define FIN_LOG(...)
@@ -51,7 +54,7 @@ static void fin_mod_emit_uint16(fin_mod_compiler* cmp, uint16_t val) {
 static int16_t fin_mod_const_idx(fin_mod_compiler* cmp, fin_val val) {
     fin_mod* mod = cmp->mod;
     for (int32_t i=0; i<mod->consfin_count; i++) {
-        if (fin_val_equal(val, mod->consts[i]))
+        if (val.i == mod->consts[i].i)
             return i;
     }
     mod->consts[mod->consfin_count] = val;

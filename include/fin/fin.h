@@ -6,6 +6,25 @@
 #ifndef FIN_H
 #define FIN_H
 
+#if defined(_MSC_VER)
+#   define FIN_CONFIG_COMPUTED_GOTO 0
+#   define _CRT_SECURE_NO_WARNINGS
+#   define inline __forceinline
+#endif
+
+#ifndef FIN_CONFIG_COMPUTED_GOTO
+#   define FIN_CONFIG_COMPUTED_GOTO 1
+#endif
+
+#if !defined(NULL)
+    #define NULL ((void*)0)
+#endif
+
+#define FIN_COUNT_OF(x) (sizeof(x) / sizeof((x)[0]))
+
+#include <stdbool.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,7 +34,20 @@ extern "C" {
 // free:    ptr != NULL, size == 0
 typedef void* (*fin_alloc)(void* ptr, unsigned int size);
 
+typedef struct fin_str fin_str;
+typedef struct fin_obj fin_obj;
 typedef struct fin_ctx fin_ctx;
+
+typedef union fin_val {
+    bool            b;
+    int64_t         i;
+    double          f;
+    struct fin_str* s;
+    struct fin_obj* o;
+} fin_val;
+
+const char* fin_str_cstr(fin_str* str);
+int32_t     fin_str_len(fin_str* str);
 
 fin_ctx* fin_ctx_create_default();
 fin_ctx* fin_ctx_create(fin_alloc alloc);
