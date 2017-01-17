@@ -11,15 +11,13 @@
 struct fin_mod;
 struct fin_str_pool;
 
-typedef void* (*fin_ctx_alloc)(void* ptr, unsigned int size);
-
 typedef struct fin_ctx {
-    fin_ctx_alloc        alloc;
+    fin_alloc            alloc;
     struct fin_str_pool* pool;
     struct fin_mod*      mod;
 } fin_ctx;
 
-fin_ctx* fin_ctx_create(fin_ctx_alloc alloc);
+fin_ctx* fin_ctx_create(fin_alloc alloc);
 fin_ctx* fin_ctx_create_default();
 void     fin_ctx_destroy(fin_ctx* ctx);
 void     fin_ctx_eval_str(fin_ctx* ctx, const char* cstr);
