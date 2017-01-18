@@ -77,9 +77,8 @@ typedef enum fin_lex_type {
 } fin_lex_type;
 
 typedef struct fin_lex fin_lex;
-typedef struct fin_str_pool fin_str_pool;
 
-fin_lex*     fin_lex_create(fin_alloc alloc, fin_str_pool* pool, const char* cstr);
+fin_lex*     fin_lex_create(fin_ctx* ctx, const char* cstr);
 void         fin_lex_destroy(fin_lex* lex);
 void         fin_lex_store(fin_lex* lex);
 void         fin_lex_restore(fin_lex* lex);

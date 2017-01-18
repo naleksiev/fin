@@ -133,7 +133,7 @@ static fin_str* fin_mod_invoke_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
     }
     strcat(signature, ")");
 
-    return fin_str_create(ctx->pool, signature, -1);
+    return fin_str_create(ctx, signature, -1);
 }
 
 static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_binary_expr* expr) {
@@ -164,29 +164,29 @@ static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
     strcat(sign, ",");
     strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, expr->rhs, NULL)));
     strcat(sign, ")");
-    return fin_str_create(ctx->pool, sign, -1);
+    return fin_str_create(ctx, sign, -1);
 }
 
 static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr, fin_ast_expr* primary) {
     switch (expr->type) {
         case fin_ast_expr_type_id: {
-            return fin_str_create(ctx->pool, "int", -1); // hack
+            return fin_str_create(ctx, "int", -1); // hack
         }
         case fin_ast_expr_type_member: {
             fin_ast_member_expr* member_expr = (fin_ast_member_expr*)expr;
             return fin_mod_resolve_type(ctx, cmp, member_expr->member, member_expr->primary);
         }
         case fin_ast_expr_type_bool: {
-            return fin_str_create(ctx->pool, "bool", -1);
+            return fin_str_create(ctx, "bool", -1);
         }
         case fin_ast_expr_type_int: {
-            return fin_str_create(ctx->pool, "int", -1);
+            return fin_str_create(ctx, "int", -1);
         }
         case fin_ast_expr_type_float: {
-            return fin_str_create(ctx->pool, "float", -1);
+            return fin_str_create(ctx, "float", -1);
         }
         case fin_ast_expr_type_str: {
-            return fin_str_create(ctx->pool, "string", -1);
+            return fin_str_create(ctx, "string", -1);
         }
         case fin_ast_expr_type_unary: {
             fin_ast_unary_expr* un_expr = (fin_ast_unary_expr*)expr;
@@ -216,7 +216,7 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             return func->ret_type;
         }
         case fin_ast_expr_type_assign: {
-            return fin_str_create(ctx->pool, "void", -1);
+            return fin_str_create(ctx, "void", -1);
         }
     }
 }
@@ -515,7 +515,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
     fin_mod_func* funcs = (fin_mod_func*)ctx->alloc(NULL, sizeof(fin_mod_func) * descs_count);
 
     fin_mod* mod = (fin_mod*)ctx->alloc(NULL, sizeof(fin_mod));
-    mod->name = fin_str_create(ctx->pool, name, -1);
+    mod->name = fin_str_create(ctx, name, -1);
     mod->funcs = funcs;
     mod->funcs_count = descs_count;
     mod->binds = NULL;
@@ -533,7 +533,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
         funcs[i].args = 0;
 
         // ret_type name "(" (arg ("," arg)* )? ")"
-        fin_lex* lex = fin_lex_create(ctx->alloc, ctx->pool, descs[i].sign);
+        fin_lex* lex = fin_lex_create(ctx, descs[i].sign);
 
         char signature[256];
         signature[0] = '\0';
@@ -561,7 +561,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
             funcs[i].args++;
         }
         strcat(signature, ")");
-        funcs[i].sign = fin_str_create(ctx->pool, signature, -1);
+        funcs[i].sign = fin_str_create(ctx, signature, -1);
 
         fin_lex_destroy(lex);
     }
@@ -571,7 +571,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
 }
 
 fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
-    fin_ast_module* module = fin_ast_parse(ctx->alloc, ctx->pool, cstr);
+    fin_ast_module* module = fin_ast_parse(ctx, cstr);
 
     fin_mod* mod = (fin_mod*)ctx->alloc(NULL, sizeof(fin_mod));
     mod->consts = (fin_val*)ctx->alloc(NULL, sizeof(fin_val) * 128);
@@ -619,7 +619,7 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
             strcat(signature, ")");
 
             f->mod = mod;
-            f->sign = fin_str_create(ctx->pool, signature, -1);
+            f->sign = fin_str_create(ctx, signature, -1);
             f->func = NULL;
             f->is_native = false;
             f->code = NULL;
@@ -636,25 +636,25 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
     fin_ast_destroy(module);
 
     mod->name = NULL;
-    mod->entry = fin_mod_find_func(ctx, mod, fin_str_create(ctx->pool, "Main()", 6));
+    mod->entry = fin_mod_find_func(ctx, mod, fin_str_create(ctx, "Main()", 6));
     fin_mod_register(ctx, mod);
     return mod;
 }
 
 void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
     if (mod->name)
-        fin_str_destroy(ctx->pool, mod->name);
+        fin_str_destroy(ctx, mod->name);
     for (int32_t i=0; i<mod->funcs_count; i++) {
         fin_mod_func* func = &mod->funcs[i];
         if (func->ret_type)
-            fin_str_destroy(ctx->pool, func->ret_type);
+            fin_str_destroy(ctx, func->ret_type);
         ctx->alloc(func->code, 0);
-        fin_str_destroy(ctx->pool, func->sign);
+        fin_str_destroy(ctx, func->sign);
     }
     if (mod->binds) {
         for (int32_t i=0; i<mod->binds_count; i++) {
             fin_mod_func_bind* bind = &mod->binds[i];
-            fin_str_destroy(ctx->pool, bind->sign);
+            fin_str_destroy(ctx, bind->sign);
         }
         ctx->alloc(mod->binds, 0);
     }

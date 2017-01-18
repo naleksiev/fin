@@ -4,6 +4,7 @@
  */
 
 #include "fin_str.h"
+#include "fin_ctx.h"
 #include <assert.h>
 #include <string.h>
 
@@ -100,7 +101,8 @@ void fin_str_pool_destroy(fin_str_pool* pool) {
     pool->alloc(pool, 0);
 }
 
-fin_str* fin_str_create(fin_str_pool* pool, const char* cstr, int32_t len) {
+fin_str* fin_str_create(fin_ctx* ctx, const char* cstr, int32_t len) {
+    fin_str_pool* pool = ctx->pool;
     if (cstr == NULL || cstr[0] == '\0' || len == 0)
         return NULL;
 
@@ -133,17 +135,18 @@ fin_str* fin_str_create(fin_str_pool* pool, const char* cstr, int32_t len) {
     return str;
 }
 
-fin_str* fin_str_clone(fin_str* str) {
-    str->ref++;
-    return str;
-}
-
-void fin_str_destroy(fin_str_pool* pool, fin_str* str) {
+void fin_str_destroy(fin_ctx* ctx, fin_str* str) {
+    fin_str_pool* pool = ctx->pool;
     if (--str->ref == 0) {
         pool->entries[str->slot].str = NULL;
         pool->entries[str->slot].hash = 1;
         pool->alloc(str, 0);
     }
+}
+
+fin_str* fin_str_clone(fin_str* str) {
+    str->ref++;
+    return str;
 }
 
 const char* fin_str_cstr(fin_str* str) {

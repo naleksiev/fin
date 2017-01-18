@@ -8,13 +8,13 @@
 
 #include <fin/fin.h>
 
-struct fin_mod;
-struct fin_str_pool;
+typedef struct fin_mod fin_mod;
+typedef struct fin_str_pool fin_str_pool;
 
 typedef struct fin_ctx {
-    fin_alloc            alloc;
-    struct fin_str_pool* pool;
-    struct fin_mod*      mod;
+    fin_alloc     alloc;
+    fin_str_pool* pool;
+    fin_mod*      mod;
 } fin_ctx;
 
 fin_ctx* fin_ctx_create(fin_alloc alloc);

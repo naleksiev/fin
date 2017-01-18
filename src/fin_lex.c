@@ -4,7 +4,7 @@
  */
 
 #include "fin_lex.h"
-#include "fin_str.h"
+#include "fin_ctx.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,13 +40,12 @@ typedef struct fin_lex_state {
 } fin_lex_state;
 
 typedef struct fin_lex {
-    fin_alloc     alloc;
-    fin_str_pool* pool;
+    fin_ctx*      ctx;
     const char*   cstr;
     int32_t       line;
     fin_lex_token token;
     fin_lex_state state;
-} fin_lex_;
+} fin_lex;
 
 static bool fin_lex_is_digit(char c) {
     return c >= '0' && c <= '9';
@@ -58,7 +57,7 @@ static bool fin_lex_is_name(char c) {
         (c >= 'A' && c <= 'Z');
 }
 
-static bool fin_lex_match_char(fin_lex_* lex, char c) {
+static bool fin_lex_match_char(fin_lex* lex, char c) {
     if (*lex->cstr == c) {
         lex->cstr++;
         return true;
@@ -66,12 +65,12 @@ static bool fin_lex_match_char(fin_lex_* lex, char c) {
     return false;
 }
 
-static void fin_lex_skip_line_comment(fin_lex_* lex) {
+static void fin_lex_skip_line_comment(fin_lex* lex) {
     while (*lex->cstr != '\n' && *lex->cstr != '\0')
         lex->cstr++;
 }
 
-static void fin_lex_skip_block_comment(fin_lex_* lex) {
+static void fin_lex_skip_block_comment(fin_lex* lex) {
     while (lex->cstr[0] != '\0') {
         if (lex->cstr[0] == '*' && lex->cstr[1] == '/') {
             lex->cstr += 2;
@@ -83,7 +82,7 @@ static void fin_lex_skip_block_comment(fin_lex_* lex) {
     }
 }
 
-static fin_lex_token fin_lex_create_token(fin_lex_* lex, fin_lex_type type) {
+static fin_lex_token fin_lex_create_token(fin_lex* lex, fin_lex_type type) {
     fin_lex_token token;
     token.type = type;
     token.cstr = NULL;
@@ -92,7 +91,7 @@ static fin_lex_token fin_lex_create_token(fin_lex_* lex, fin_lex_type type) {
     return token;
 }
 
-static fin_lex_token fin_lex_create_number_token(fin_lex_* lex) {
+static fin_lex_token fin_lex_create_number_token(fin_lex* lex) {
     fin_lex_token token;
     token.cstr = lex->cstr - 1;
     token.line = lex->line;
@@ -109,7 +108,7 @@ static fin_lex_token fin_lex_create_number_token(fin_lex_* lex) {
     return token;
 }
 
-static fin_lex_token fin_lex_create_string_token(fin_lex_* lex) {
+static fin_lex_token fin_lex_create_string_token(fin_lex* lex) {
     fin_lex_token token;
     token.type = fin_lex_type_string;
     token.cstr = lex->cstr;
@@ -129,7 +128,7 @@ static fin_lex_token fin_lex_create_string_token(fin_lex_* lex) {
     return fin_lex_create_token(lex, fin_lex_type_error);
 }
 
-static fin_lex_token fin_lex_create_name_token(fin_lex_* lex) {
+static fin_lex_token fin_lex_create_name_token(fin_lex* lex) {
     fin_lex_token token;
     token.cstr = lex->cstr - 1;
     token.line = lex->line;
@@ -149,12 +148,12 @@ static fin_lex_token fin_lex_create_name_token(fin_lex_* lex) {
     return token;
 }
 
-static void fin_lex_skip_whitespaces(fin_lex_* lex) {
+static void fin_lex_skip_whitespaces(fin_lex* lex) {
     while (*lex->cstr == ' ' || *lex->cstr == '\t' || *lex->cstr == '\r')
         lex->cstr++;
 };
 
-static fin_lex_token fin_lex_next_token(fin_lex_* lex) {
+static fin_lex_token fin_lex_next_token(fin_lex* lex) {
     if (*lex->cstr == '\0')
         return fin_lex_create_token(lex, fin_lex_type_eof);
 
@@ -228,18 +227,17 @@ static fin_lex_token fin_lex_next_token(fin_lex_* lex) {
     };
 }
 
-fin_lex_* fin_lex_create(fin_alloc alloc, fin_str_pool* pool, const char* cstr) {
-    fin_lex_* lex = (fin_lex_*)alloc(NULL, sizeof(fin_lex_));
-    lex->alloc = alloc;
-    lex->pool = pool; //REMOVE
+fin_lex* fin_lex_create(fin_ctx* ctx, const char* cstr) {
+    fin_lex* lex = (fin_lex*)ctx->alloc(NULL, sizeof(fin_lex));
+    lex->ctx = ctx;
     lex->cstr = cstr;
     lex->line = 1;
     fin_lex_next(lex);
     return lex;
 }
 
-void fin_lex_destroy(fin_lex_* lex) {
-    lex->alloc(lex, 0);
+void fin_lex_destroy(fin_lex* lex) {
+    lex->ctx->alloc(lex, 0);
 }
 
 void fin_lex_store(fin_lex* lex) {
@@ -254,11 +252,11 @@ void fin_lex_restore(fin_lex* lex) {
     lex->token = lex->state.token;
 }
 
-void fin_lex_next(fin_lex_* lex) {
+void fin_lex_next(fin_lex* lex) {
     lex->token = fin_lex_next_token(lex);
 }
 
-bool fin_lex_match(fin_lex_* lex, fin_lex_type type) {
+bool fin_lex_match(fin_lex* lex, fin_lex_type type) {
     if (lex->token.type == type) {
         fin_lex_next(lex);
         return true;
@@ -266,37 +264,37 @@ bool fin_lex_match(fin_lex_* lex, fin_lex_type type) {
     return false;
 }
 
-fin_lex_type fin_lex_get_type(fin_lex_* lex) {
+fin_lex_type fin_lex_get_type(fin_lex* lex) {
     return lex->token.type;
 }
 
-bool fin_lex_consume_bool(fin_lex_* lex) {
+bool fin_lex_consume_bool(fin_lex* lex) {
     assert(0);
     return false;
 }
 
-int64_t fin_lex_consume_int(fin_lex_* lex) {
+int64_t fin_lex_consume_int(fin_lex* lex) {
     int64_t value = strtoll(lex->token.cstr, NULL, 10);
     fin_lex_next(lex);
     return value;
 }
 
-double fin_lex_consume_float(fin_lex_* lex) {
+double fin_lex_consume_float(fin_lex* lex) {
     double value = strtod(lex->token.cstr, NULL);
     fin_lex_next(lex);
     return value;
 }
 
-fin_str* fin_lex_consume_string(fin_lex_* lex) {
+fin_str* fin_lex_consume_string(fin_lex* lex) {
 //    char buffer[1024];
 //    assert(lex->token.len < FIN_COUNT_OF(buffer));
-    fin_str* value = fin_str_create(lex->pool, lex->token.cstr, lex->token.len);
+    fin_str* value = fin_str_create(lex->ctx, lex->token.cstr, lex->token.len);
     fin_lex_next(lex);
     return value;
 }
 
-fin_str* fin_lex_consume_name(fin_lex_* lex) {
-    fin_str* value = fin_str_create(lex->pool, lex->token.cstr, lex->token.len);
+fin_str* fin_lex_consume_name(fin_lex* lex) {
+    fin_str* value = fin_str_create(lex->ctx, lex->token.cstr, lex->token.len);
     fin_lex_next(lex);
     return value;
 }

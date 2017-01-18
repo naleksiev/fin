@@ -237,14 +237,13 @@ typedef struct fin_ast_type {
 } fin_ast_type;
 
 typedef struct fin_ast_module {
-    fin_alloc     alloc;
-    fin_str_pool* pool;
+    fin_ctx*      ctx;
     fin_str*      name;
     fin_ast_type* types;
     fin_ast_func* funcs;
 } fin_ast_module;
 
-fin_ast_module* fin_ast_parse(fin_alloc alloc, fin_str_pool* pool, const char* str);
+fin_ast_module* fin_ast_parse(fin_ctx* ctx, const char* str);
 void            fin_ast_destroy(fin_ast_module* mod);
 
 #endif // #ifndef FIN_AST_H
