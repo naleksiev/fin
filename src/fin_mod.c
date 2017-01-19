@@ -21,6 +21,11 @@ typedef struct fin_mod_type {
     int32_t  fields;
 } fin_mod_type;
 
+typedef struct fin_mod_local {
+    fin_str* name;
+    fin_str* type;
+} fin_mod_local;
+
 typedef struct fin_mod_compiler {
     fin_mod*      mod;
     fin_ast_func* func;
@@ -28,7 +33,7 @@ typedef struct fin_mod_compiler {
     uint8_t*      code_begin;
     uint8_t*      code_end;
     uint8_t       code_storage[1024];
-    fin_str*      locals[256];
+    fin_mod_local locals[256];
     int32_t       locals_count;
     fin_str*      params[32];
     int32_t       params_count;
@@ -99,7 +104,7 @@ static fin_mod* fin_mod_resolve_module(fin_ctx* ctx, fin_mod* mod, fin_str* id) 
 
 static int32_t fin_mod_resolve_local(fin_mod_compiler* cmp, fin_str* id) {
     for (int32_t i=0; i<cmp->locals_count; i++)
-        if (cmp->locals[i] == id)
+        if (cmp->locals[i].name == id)
             return i;
     return -1;
 }
@@ -170,7 +175,14 @@ static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
 static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr, fin_ast_expr* primary) {
     switch (expr->type) {
         case fin_ast_expr_type_id: {
-            return fin_str_create(ctx, "int", -1); // hack
+            fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
+            int32_t local_idx = fin_mod_resolve_local(cmp, id_expr->name);
+            if (local_idx >= 0)
+                return cmp->locals[local_idx].type;
+            int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
+            if (param_idx >= 0)
+                return fin_str_create(ctx, "int", -1); // hack
+            assert(0);
         }
         case fin_ast_expr_type_member: {
             fin_ast_member_expr* member_expr = (fin_ast_member_expr*)expr;
@@ -428,7 +440,8 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
             fin_ast_decl_stmt* decl_stmt = (fin_ast_decl_stmt*)stmt;
             assert(fin_mod_resolve_local(cmp, decl_stmt->name) < 0);
             int32_t local_idx = cmp->locals_count++;
-            cmp->locals[local_idx] = decl_stmt->name;
+            cmp->locals[local_idx].name = decl_stmt->name;
+            cmp->locals[local_idx].type = decl_stmt->type->name;
             if (decl_stmt->init) {
                 fin_mod_compile_expr(ctx, cmp, decl_stmt->init, NULL);
                 fin_mod_emit_uint8(cmp, fin_op_store_local);

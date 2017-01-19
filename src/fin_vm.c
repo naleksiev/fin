@@ -48,9 +48,9 @@ typedef struct fin_vm {
     fin_alloc    alloc;
 } fin_vm;
 
-void fin_vm_invoke_int(fin_mod_func* func, fin_val* stack);
+void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack);
 
-void fin_vm_interpret(fin_mod* mod, uint8_t* ip, fin_val* stack, fin_val* args, int32_t locals) {
+void fin_vm_interpret(fin_ctx* ctx, fin_mod* mod, uint8_t* ip, fin_val* stack, fin_val* args, int32_t locals) {
     fin_val* top = stack + locals;
 
     FIN_VM_LOOP_BEGIN() {
@@ -85,7 +85,7 @@ void fin_vm_interpret(fin_mod* mod, uint8_t* ip, fin_val* stack, fin_val* args, 
             int32_t idx = *ip++;
             idx |= *ip++ << 8;
             fin_mod_func* func = mod->binds[idx].func;
-            fin_vm_invoke_int(func, top);
+            fin_vm_invoke_int(ctx, func, top);
             top -= func->args - (func->ret_type ? 1 : 0);
             FIN_VM_NEXT();
         }
@@ -129,14 +129,14 @@ void fin_vm_destroy(fin_vm* vm) {
     vm->alloc(vm, 0);
 }
 
-inline void fin_vm_invoke_int(fin_mod_func* func, fin_val* stack) {
+inline void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
     if (func->is_native)
-        (*func->func)(stack - func->args);
+        (*func->func)(ctx, stack - func->args);
     else
-        fin_vm_interpret(func->mod, func->code, stack, stack - func->args, func->locals);
+        fin_vm_interpret(ctx, func->mod, func->code, stack, stack - func->args, func->locals);
 }
 
-void fin_vm_invoke(fin_vm* vm, fin_mod_func* func) {
-    fin_vm_invoke_int(func, vm->stack.top);
+void fin_vm_invoke(fin_ctx* ctx, fin_vm* vm, fin_mod_func* func) {
+    fin_vm_invoke_int(ctx, func, vm->stack.top);
 }
 

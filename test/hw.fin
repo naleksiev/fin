@@ -1,4 +1,4 @@
 void Main() {
-    io.WriteLine("Hello, World!");
+    io.WriteLine("Hello, " + "World!");
 }
 

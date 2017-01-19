@@ -18,7 +18,7 @@ typedef struct fin_mod_func {
     fin_mod*    mod;
     fin_str*    ret_type;
     fin_str*    sign;
-    void        (*func)(fin_val* args);
+    void        (*func)(fin_ctx* ctx, fin_val* args);
     bool        is_native;
     uint8_t*    code;
     int32_t     code_length;
@@ -28,7 +28,7 @@ typedef struct fin_mod_func {
 
 typedef struct fin_mod_func_desc {
     char* sign;
-    void  (*func)(fin_val*);
+    void  (*func)(fin_ctx* ctx, fin_val*);
 } fin_mod_func_desc;
 
 typedef struct fin_mod_func_bind {

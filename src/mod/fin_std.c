@@ -5,29 +5,55 @@
 
 #include "fin_std.h"
 #include "../fin_mod.h"
+#include <math.h>
+#include <stdio.h>
 
-static void fin_std_int_add(fin_val* args) { args[0].i = args[0].i  + args[1].i; }
-static void fin_std_int_sub(fin_val* args) { args[0].i = args[0].i  - args[1].i; }
-static void fin_std_int_mul(fin_val* args) { args[0].i = args[0].i  * args[1].i; }
-static void fin_std_int_div(fin_val* args) { args[0].i = args[0].i  / args[1].i; }
-static void fin_std_int_mod(fin_val* args) { args[0].i = args[0].i  % args[1].i; }
-static void fin_std_int_and(fin_val* args) { args[0].i = args[0].i  & args[1].i; }
-static void fin_std_int_or (fin_val* args) { args[0].i = args[0].i  | args[1].i; }
-static void fin_std_int_xor(fin_val* args) { args[0].i = args[0].i  ^ args[1].i; }
-static void fin_std_int_shl(fin_val* args) { args[0].i = args[0].i << args[1].i; }
-static void fin_std_int_shr(fin_val* args) { args[0].i = args[0].i >> args[1].i; }
-static void fin_std_int_lt (fin_val* args) { args[0].b = args[0].i  < args[1].i; }
-static void fin_std_int_leq(fin_val* args) { args[0].b = args[0].i <= args[1].i; }
-static void fin_std_int_gt (fin_val* args) { args[0].b = args[0].i  > args[1].i; }
-static void fin_std_int_geq(fin_val* args) { args[0].b = args[0].i >= args[1].i; }
-static void fin_std_int_eq (fin_val* args) { args[0].b = args[0].i == args[1].i; }
-static void fin_std_int_neq(fin_val* args) { args[0].b = args[0].i != args[1].i; }
+static void fin_std_int_add(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  + args[1].i; }
+static void fin_std_int_sub(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  - args[1].i; }
+static void fin_std_int_mul(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  * args[1].i; }
+static void fin_std_int_div(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  / args[1].i; }
+static void fin_std_int_mod(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  % args[1].i; }
+static void fin_std_int_and(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  & args[1].i; }
+static void fin_std_int_or (fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  | args[1].i; }
+static void fin_std_int_xor(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  ^ args[1].i; }
+static void fin_std_int_shl(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i << args[1].i; }
+static void fin_std_int_shr(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i >> args[1].i; }
+static void fin_std_int_lt (fin_ctx* ctx, fin_val* args) { args[0].b = args[0].i  < args[1].i; }
+static void fin_std_int_leq(fin_ctx* ctx, fin_val* args) { args[0].b = args[0].i <= args[1].i; }
+static void fin_std_int_gt (fin_ctx* ctx, fin_val* args) { args[0].b = args[0].i  > args[1].i; }
+static void fin_std_int_geq(fin_ctx* ctx, fin_val* args) { args[0].b = args[0].i >= args[1].i; }
+static void fin_std_int_eq (fin_ctx* ctx, fin_val* args) { args[0].b = args[0].i == args[1].i; }
+static void fin_std_int_neq(fin_ctx* ctx, fin_val* args) { args[0].b = args[0].i != args[1].i; }
+static void fin_std_int_to_float(fin_ctx* ctx, fin_val* args) { args[0].f = (double)(args[0].i); }
 
-static void fin_std_str_eq(fin_val* args)  { args[0].b = (args[0].s == args[1].s); }
-static void fin_std_str_neq(fin_val* args) { args[0].b = (args[0].s != args[1].s); }
+static void fin_std_int_to_str(fin_ctx* ctx, fin_val* args) {
+    char buffer[64];
+    sprintf(buffer, "%ld", args[0].i);
+    args[0].s = fin_str_create(ctx, buffer, -1);
+}
 
-static void fin_std_float_to_int(fin_val* args) { args[0].i = (int64_t)(args[0].f); }
-static void fin_std_int_to_float(fin_val* args) { args[0].f = (double)(args[0].i); }
+static void fin_std_float_add(fin_ctx* ctx, fin_val* args) { args[0].f = args[0].f  + args[1].f; }
+static void fin_std_float_sub(fin_ctx* ctx, fin_val* args) { args[0].f = args[0].f  - args[1].f; }
+static void fin_std_float_mul(fin_ctx* ctx, fin_val* args) { args[0].f = args[0].f  * args[1].f; }
+static void fin_std_float_div(fin_ctx* ctx, fin_val* args) { args[0].f = args[0].f  / args[1].f; }
+static void fin_std_float_mod(fin_ctx* ctx, fin_val* args) { args[0].f = fmod(args[0].f, args[1].f); }
+static void fin_std_float_lt (fin_ctx* ctx, fin_val* args) { args[0].b = args[0].f  < args[1].f; }
+static void fin_std_float_leq(fin_ctx* ctx, fin_val* args) { args[0].b = args[0].f <= args[1].f; }
+static void fin_std_float_gt (fin_ctx* ctx, fin_val* args) { args[0].b = args[0].f  > args[1].f; }
+static void fin_std_float_geq(fin_ctx* ctx, fin_val* args) { args[0].b = args[0].f >= args[1].f; }
+static void fin_std_float_eq (fin_ctx* ctx, fin_val* args) { args[0].b = args[0].f == args[1].f; }
+static void fin_std_float_neq(fin_ctx* ctx, fin_val* args) { args[0].b = args[0].f != args[1].f; }
+static void fin_std_float_to_int(fin_ctx* ctx, fin_val* args) { args[0].i = (int64_t)(args[0].f); }
+
+static void fin_std_float_to_str(fin_ctx* ctx, fin_val* args) {
+    char buffer[64];
+    sprintf(buffer, "%g", args[0].f);
+    args[0].s = fin_str_create(ctx, buffer, -1);
+}
+
+static void fin_std_str_add(fin_ctx* ctx, fin_val* args) { args[0].s = fin_str_concat(ctx, args[0].s, args[1].s); }
+static void fin_std_str_eq(fin_ctx* ctx, fin_val* args)  { args[0].b = (args[0].s == args[1].s); }
+static void fin_std_str_neq(fin_ctx* ctx, fin_val* args) { args[0].b = (args[0].s != args[1].s); }
 
 void fin_std_register(fin_ctx* ctx) {
     fin_mod_func_desc descs[] = {
@@ -47,12 +73,26 @@ void fin_std_register(fin_ctx* ctx) {
         { "bool __op_geq(int,int)", &fin_std_int_geq },
         { "bool __op_eq(int,int)",  &fin_std_int_eq  },
         { "bool __op_neq(int,int)", &fin_std_int_neq },
+        { "float float(int)", &fin_std_int_to_float },
+        { "string string(int)", &fin_std_int_to_str },
 
+        { "float __op_add(float,float)", &fin_std_float_add },
+        { "float __op_sub(float,float)", &fin_std_float_sub },
+        { "float __op_mul(float,float)", &fin_std_float_mul },
+        { "float __op_div(float,float)", &fin_std_float_div },
+        { "float __op_mod(float,float)", &fin_std_float_mod },
+        { "bool __op_lt(float,float)",   &fin_std_float_lt  },
+        { "bool __op_leq(float,float)",  &fin_std_float_leq },
+        { "bool __op_gt(float,float)",   &fin_std_float_gt  },
+        { "bool __op_geq(float,float)",  &fin_std_float_geq },
+        { "bool __op_eq(float,float)",   &fin_std_float_eq  },
+        { "bool __op_neq(float,float)",  &fin_std_float_neq },
+        { "int int(float)", &fin_std_float_to_int },
+        { "string string(float)", &fin_std_float_to_str },
+
+        { "string __op_add(string,string)",  &fin_std_str_add  },
         { "bool __op_eq(string,string)",  &fin_std_str_eq  },
         { "bool __op_neq(string,string)", &fin_std_str_neq },
-
-        { "float float(int)", &fin_std_int_to_float },
-        { "int int(float)", &fin_std_float_to_int },
     };
     fin_mod_create(ctx, "", descs, FIN_COUNT_OF(descs));
 }

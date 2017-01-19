@@ -49,6 +49,7 @@ typedef union fin_val {
 fin_str*    fin_str_create(fin_ctx* ctx, const char* str, int32_t len);
 void        fin_str_destroy(fin_ctx* ctx, fin_str* str);
 fin_str*    fin_str_clone(fin_str* str);
+fin_str*    fin_str_concat(fin_ctx* ctx, fin_str* a, fin_str* b);
 const char* fin_str_cstr(fin_str* str);
 int32_t     fin_str_len(fin_str* str);
 

@@ -149,6 +149,16 @@ fin_str* fin_str_clone(fin_str* str) {
     return str;
 }
 
+fin_str* fin_str_concat(fin_ctx* ctx, fin_str* a, fin_str* b) {
+    char* buffer = ctx->alloc(NULL, a->len + b->len + 1);
+    strncpy(buffer, a->cstr, a->len);
+    strncpy(buffer + a->len, b->cstr, b->len);
+    buffer[a->len + b->len] = '\0';
+    fin_str* result = fin_str_create(ctx, buffer, a->len + b->len);
+    ctx->alloc(buffer, 0);
+    return result;
+}
+
 const char* fin_str_cstr(fin_str* str) {
     return str->cstr;
 }
