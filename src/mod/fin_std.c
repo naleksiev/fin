@@ -7,6 +7,7 @@
 #include "../fin_mod.h"
 #include <math.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 static void fin_std_int_add(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  + args[1].i; }
 static void fin_std_int_sub(fin_ctx* ctx, fin_val* args) { args[0].i = args[0].i  - args[1].i; }
@@ -28,7 +29,7 @@ static void fin_std_int_to_float(fin_ctx* ctx, fin_val* args) { args[0].f = (dou
 
 static void fin_std_int_to_str(fin_ctx* ctx, fin_val* args) {
     char buffer[64];
-    sprintf(buffer, "%ld", args[0].i);
+    sprintf(buffer, "%" PRIu64, args[0].i);
     args[0].s = fin_str_create(ctx, buffer, -1);
 }
 
