@@ -4,7 +4,6 @@
  */
 
 #include "fin_lex.h"
-#include "fin_ctx.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +39,6 @@ typedef struct fin_lex_state {
 } fin_lex_state;
 
 typedef struct fin_lex {
-    fin_ctx*      ctx;
     const char*   cstr;
     int32_t       line;
     fin_lex_token token;
@@ -227,17 +225,16 @@ static fin_lex_token fin_lex_next_token(fin_lex* lex) {
     };
 }
 
-fin_lex* fin_lex_create(fin_ctx* ctx, const char* cstr) {
-    fin_lex* lex = (fin_lex*)ctx->alloc(NULL, sizeof(fin_lex));
-    lex->ctx = ctx;
+fin_lex* fin_lex_create(fin_alloc alloc, const char* cstr) {
+    fin_lex* lex = (fin_lex*)alloc(NULL, sizeof(fin_lex));
     lex->cstr = cstr;
     lex->line = 1;
     fin_lex_next(lex);
     return lex;
 }
 
-void fin_lex_destroy(fin_lex* lex) {
-    lex->ctx->alloc(lex, 0);
+void fin_lex_destroy(fin_alloc alloc, fin_lex* lex) {
+    alloc(lex, 0);
 }
 
 void fin_lex_store(fin_lex* lex) {
@@ -285,16 +282,18 @@ double fin_lex_consume_float(fin_lex* lex) {
     return value;
 }
 
-fin_str* fin_lex_consume_string(fin_lex* lex) {
-//    char buffer[1024];
-//    assert(lex->token.len < FIN_COUNT_OF(buffer));
-    fin_str* value = fin_str_create(lex->ctx, lex->token.cstr, lex->token.len);
+fin_lex_str fin_lex_consume_string(fin_lex* lex) {
+    fin_lex_str value;
+    value.cstr = lex->token.cstr;
+    value.len = lex->token.len;
     fin_lex_next(lex);
     return value;
 }
 
-fin_str* fin_lex_consume_name(fin_lex* lex) {
-    fin_str* value = fin_str_create(lex->ctx, lex->token.cstr, lex->token.len);
+fin_lex_str fin_lex_consume_name(fin_lex* lex) {
+    fin_lex_str value;
+    value.cstr = lex->token.cstr;
+    value.len = lex->token.len;
     fin_lex_next(lex);
     return value;
 }

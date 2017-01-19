@@ -76,10 +76,15 @@ typedef enum fin_lex_type {
     fin_lex_type_eof,
 } fin_lex_type;
 
+typedef struct fin_lex_str {
+    const char* cstr;
+    int32_t     len;
+} fin_lex_str;
+
 typedef struct fin_lex fin_lex;
 
-fin_lex*     fin_lex_create(fin_ctx* ctx, const char* cstr);
-void         fin_lex_destroy(fin_lex* lex);
+fin_lex*     fin_lex_create(fin_alloc alloc, const char* cstr);
+void         fin_lex_destroy(fin_alloc alloc, fin_lex* lex);
 void         fin_lex_store(fin_lex* lex);
 void         fin_lex_restore(fin_lex* lex);
 void         fin_lex_next(fin_lex* lex);
@@ -88,8 +93,8 @@ fin_lex_type fin_lex_get_type(fin_lex* lex);
 bool         fin_lex_consume_bool(fin_lex* lex);
 int64_t      fin_lex_consume_int(fin_lex* lex);
 double       fin_lex_consume_float(fin_lex* lex);
-fin_str*     fin_lex_consume_string(fin_lex* lex);
-fin_str*     fin_lex_consume_name(fin_lex* lex);
+fin_lex_str  fin_lex_consume_string(fin_lex* lex);
+fin_lex_str  fin_lex_consume_name(fin_lex* lex);
 void         fin_lex_consume_name_to(fin_lex* lex, char* buffer);
 
 #endif //#ifndef FIN_LEX_H

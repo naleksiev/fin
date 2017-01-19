@@ -533,7 +533,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
         funcs[i].args = 0;
 
         // ret_type name "(" (arg ("," arg)* )? ")"
-        fin_lex* lex = fin_lex_create(ctx, descs[i].sign);
+        fin_lex* lex = fin_lex_create(ctx->alloc, descs[i].sign);
 
         char signature[256];
         signature[0] = '\0';
@@ -545,8 +545,10 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
 
         if (fin_lex_match(lex, fin_lex_type_void))
             funcs[i].ret_type = NULL;
-        else
-            funcs[i].ret_type = fin_lex_consume_name(lex);
+        else {
+            fin_lex_str lex_str = fin_lex_consume_name(lex);
+            funcs[i].ret_type = fin_str_create(ctx, lex_str.cstr, lex_str.len);
+        }
 
         fin_lex_consume_name_to(lex, signature + strlen(signature));
 
@@ -563,7 +565,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
         strcat(signature, ")");
         funcs[i].sign = fin_str_create(ctx, signature, -1);
 
-        fin_lex_destroy(lex);
+        fin_lex_destroy(ctx->alloc, lex);
     }
 
     fin_mod_register(ctx, mod);
