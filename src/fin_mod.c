@@ -21,10 +21,10 @@ typedef struct fin_mod_type {
     int32_t  fields;
 } fin_mod_type;
 
-typedef struct fin_mod_local {
+typedef struct fin_mod_var {
     fin_str* name;
     fin_str* type;
-} fin_mod_local;
+} fin_mod_var;
 
 typedef struct fin_mod_compiler {
     fin_mod*      mod;
@@ -33,9 +33,9 @@ typedef struct fin_mod_compiler {
     uint8_t*      code_begin;
     uint8_t*      code_end;
     uint8_t       code_storage[1024];
-    fin_mod_local locals[256];
+    fin_mod_var   locals[256];
     int32_t       locals_count;
-    fin_str*      params[32];
+    fin_mod_var   params[32];
     int32_t       params_count;
 } fin_mod_compiler;
 
@@ -111,7 +111,7 @@ static int32_t fin_mod_resolve_local(fin_mod_compiler* cmp, fin_str* id) {
 
 static int32_t fin_mod_resolve_arg(fin_mod_compiler* cmp, fin_str* id) {
     for (int32_t i=0; i<cmp->params_count; i++)
-        if (cmp->params[i] == id)
+        if (cmp->params[i].name == id)
             return i;
     return -1;
 }
@@ -181,7 +181,7 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
                 return cmp->locals[local_idx].type;
             int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
             if (param_idx >= 0)
-                return fin_str_create(ctx, "int", -1); // hack
+                return cmp->params[param_idx].type;
             assert(0);
         }
         case fin_ast_expr_type_member: {
@@ -472,8 +472,11 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     cmp.locals_count = 0;
     cmp.params_count = 0;
 
-    for (fin_ast_param* param = func->params; param; param = param->next)
-        cmp.params[cmp.params_count++] = param->name;
+    for (fin_ast_param* param = func->params; param; param = param->next) {
+        fin_mod_var* var = &cmp.params[cmp.params_count++];
+        var->name = param->name;
+        var->type = param->type->name;
+    }
 
     fin_mod_compile_stmt(ctx, &cmp, &func->block->base);
     if (cmp.code == cmp.code_begin || cmp.code[-1] != fin_op_return) {
