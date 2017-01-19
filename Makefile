@@ -15,7 +15,7 @@ endif
 
 OPTIMIZE = -O0
 ifdef release
-	OPTIMIZE = -Os
+	OPTIMIZE = -O3
 endif
 .build/fin.o: test/fin.c src/*.h src/*.c src/mod/*.h src/mod/*.c include/fin/fin.h
 	mkdir -p .build
