@@ -7,6 +7,7 @@
 #include "fin_ctx.h"
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef struct fin_str {
     int32_t ref;
