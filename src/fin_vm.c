@@ -45,7 +45,7 @@ typedef struct fin_vm_stack {
 
 typedef struct fin_vm {
     fin_vm_stack stack;
-    fin_alloc    alloc;
+    fin_ctx*     ctx;
 } fin_vm;
 
 void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack);
@@ -117,16 +117,16 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod* mod, uint8_t* ip, fin_val* stack, f
     FIN_VM_LOOP_END();
 }
 
-fin_vm* fin_vm_create(fin_alloc alloc) {
-    fin_vm* vm = (fin_vm*)alloc(NULL, sizeof(fin_vm));
+fin_vm* fin_vm_create(fin_ctx* ctx) {
+    fin_vm* vm = (fin_vm*)ctx->alloc(NULL, sizeof(fin_vm));
     vm->stack.begin = vm->stack.stash;
     vm->stack.top = vm->stack.begin;
-    vm->alloc = alloc;
+    vm->ctx = ctx;
     return vm;
 }
 
 void fin_vm_destroy(fin_vm* vm) {
-    vm->alloc(vm, 0);
+    vm->ctx->alloc(vm, 0);
 }
 
 inline void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
@@ -136,7 +136,7 @@ inline void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) 
         fin_vm_interpret(ctx, func->mod, func->code, stack, stack - func->args, func->locals);
 }
 
-void fin_vm_invoke(fin_ctx* ctx, fin_vm* vm, fin_mod_func* func) {
-    fin_vm_invoke_int(ctx, func, vm->stack.top);
+void fin_vm_invoke(fin_vm* vm, fin_mod_func* func) {
+    fin_vm_invoke_int(vm->ctx, func, vm->stack.top);
 }
 
