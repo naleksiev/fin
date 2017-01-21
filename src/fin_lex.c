@@ -32,6 +32,17 @@ typedef struct fin_lex_token {
     int32_t      line;
 } fin_lex_token;
 
+typedef enum fin_lex_scope_type {
+    fin_lex_scope_type_global,
+    fin_lex_scope_type_string,
+    fin_lex_scope_type_interp
+} fin_lex_scope_type;
+
+typedef struct fin_lex_scope {
+    fin_lex_scope_type type;
+    const char*        cstr;
+} fin_lex_scope;
+
 typedef struct fin_lex_state {
     const char*   cstr;
     int32_t       line;
@@ -43,6 +54,8 @@ typedef struct fin_lex {
     int32_t       line;
     fin_lex_token token;
     fin_lex_state state;
+    fin_lex_scope scopes[16];
+    int32_t       scope_idx;
 } fin_lex;
 
 static bool fin_lex_is_digit(char c) {
@@ -107,20 +120,39 @@ static fin_lex_token fin_lex_create_number_token(fin_lex* lex) {
 }
 
 static fin_lex_token fin_lex_create_string_token(fin_lex* lex) {
-    fin_lex_token token;
-    token.type = fin_lex_type_string;
-    token.cstr = lex->cstr;
-    token.line = lex->line;
-    token.len = 0;
-
+    const char* start = lex->cstr;
     char c;
     while ((c = *lex->cstr++) != '\0') {
-        if (c == '"') {
-            token.len = (int32_t)(lex->cstr - token.cstr - 1);
-            return token;
+        switch (c) {
+            case '{': {
+                if (lex->cstr - start > 1) {
+                    lex->cstr--;
+                    fin_lex_token token;
+                    token.type = fin_lex_type_string;
+                    token.cstr = start;
+                    token.line = lex->line;
+                    token.len = (int32_t)(lex->cstr - start);
+                    return token;
+                }
+                fin_lex_scope* scope = &lex->scopes[++lex->scope_idx];
+                scope->type = fin_lex_scope_type_interp;
+                scope->cstr = lex->cstr;
+                return fin_lex_create_token(lex, fin_lex_type_l_str_interp);
+            }
+            case '"': {
+                if (lex->cstr - start > 1) {
+                    lex->cstr--;
+                    fin_lex_token token;
+                    token.type = fin_lex_type_string;
+                    token.cstr = start;
+                    token.line = lex->line;
+                    token.len = (int32_t)(lex->cstr - start);
+                    return token;
+                }
+                lex->scope_idx--;
+                return fin_lex_create_token(lex, fin_lex_type_quot);
+            }
         }
-        if (c == '\\')
-            lex->cstr++;
     }
     //fin_lex_create_error_token(lex, "Unterminated string.");
     return fin_lex_create_token(lex, fin_lex_type_error);
@@ -152,6 +184,12 @@ static void fin_lex_skip_whitespaces(fin_lex* lex) {
 };
 
 static fin_lex_token fin_lex_next_token(fin_lex* lex) {
+    fin_lex_scope scope = lex->scopes[lex->scope_idx];
+
+    if (scope.type == fin_lex_scope_type_string) {
+        return fin_lex_create_string_token(lex);
+    }
+
     if (*lex->cstr == '\0')
         return fin_lex_create_token(lex, fin_lex_type_eof);
 
@@ -164,7 +202,6 @@ static fin_lex_token fin_lex_next_token(fin_lex* lex) {
             case '[': return fin_lex_create_token(lex, fin_lex_type_l_bracket);
             case ']': return fin_lex_create_token(lex, fin_lex_type_r_bracket);
             case '{': return fin_lex_create_token(lex, fin_lex_type_l_brace);
-            case '}': return fin_lex_create_token(lex, fin_lex_type_r_brace);
             case '.': return fin_lex_create_token(lex, fin_lex_type_dot);
             case ',': return fin_lex_create_token(lex, fin_lex_type_comma);
             case '?': return fin_lex_create_token(lex, fin_lex_type_question);
@@ -213,7 +250,16 @@ static fin_lex_token fin_lex_next_token(fin_lex* lex) {
                 lex->line++;
                 break;
             case '"':
-                return fin_lex_create_string_token(lex);
+                lex->scope_idx++;
+                lex->scopes[lex->scope_idx].cstr = lex->cstr - 1;
+                lex->scopes[lex->scope_idx].type = fin_lex_scope_type_string;
+                return fin_lex_create_token(lex, fin_lex_type_quot);
+            case '}':
+                if (lex->scopes[lex->scope_idx].type == fin_lex_scope_type_interp) {
+                    lex->scope_idx--;
+                    return fin_lex_create_token(lex, fin_lex_type_r_str_interp);
+                }
+                return fin_lex_create_token(lex, fin_lex_type_r_brace);
             default:
                 if (fin_lex_is_name(c))
                     return fin_lex_create_name_token(lex);
@@ -229,6 +275,9 @@ fin_lex* fin_lex_create(fin_alloc alloc, const char* cstr) {
     fin_lex* lex = (fin_lex*)alloc(NULL, sizeof(fin_lex));
     lex->cstr = cstr;
     lex->line = 1;
+    lex->scope_idx = 0;
+    lex->scopes[0].type = fin_lex_scope_type_global;
+    lex->scopes[0].cstr = cstr;
     fin_lex_next(lex);
     return lex;
 }

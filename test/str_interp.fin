@@ -1,0 +1,5 @@
+void Main() {
+    int x = 2;
+    io.WriteLine("x = {x}");
+    io.WriteLine("x + 3 = {x} + {3} = {x + 3}");
+}

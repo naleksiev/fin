@@ -15,6 +15,9 @@ typedef enum fin_lex_type {
     fin_lex_type_string,
     fin_lex_type_name,
 
+    fin_lex_type_quot,
+    fin_lex_type_l_str_interp,
+    fin_lex_type_r_str_interp,
     fin_lex_type_dot,
     fin_lex_type_comma,
     fin_lex_type_question,

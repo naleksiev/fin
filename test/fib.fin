@@ -3,5 +3,5 @@ int Fib(int n) {
 }
 
 void Main() {
-    io.WriteLine(Fib(10));
+    io.WriteLine("{Fib(10)}");
 }

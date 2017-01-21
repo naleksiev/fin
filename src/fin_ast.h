@@ -20,6 +20,7 @@ typedef enum fin_ast_expr_type {
     fin_ast_expr_type_int,
     fin_ast_expr_type_float,
     fin_ast_expr_type_str,
+    fin_ast_expr_type_str_interp,
     fin_ast_expr_type_unary,
     fin_ast_expr_type_binary,
     fin_ast_expr_type_cond,
@@ -62,6 +63,12 @@ typedef struct fin_ast_str_exp {
     fin_ast_expr base;
     fin_str*     value;
 } fin_ast_str_expr;
+
+typedef struct fin_ast_str_interp_exp {
+    fin_ast_expr                   base;
+    fin_ast_expr*                  expr;
+    struct fin_ast_str_interp_exp* next;
+} fin_ast_str_interp_expr;
 
 typedef enum fin_ast_unary_type {
     fin_ast_unary_type_pos,

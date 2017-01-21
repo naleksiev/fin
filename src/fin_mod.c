@@ -200,6 +200,9 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
         case fin_ast_expr_type_str: {
             return fin_str_create(ctx, "string", -1);
         }
+        case fin_ast_expr_type_str_interp: {
+            return fin_str_create(ctx, "string", -1);
+        }
         case fin_ast_expr_type_unary: {
             fin_ast_unary_expr* un_expr = (fin_ast_unary_expr*)expr;
             return fin_mod_resolve_type(ctx, cmp, un_expr->expr, NULL);
@@ -287,7 +290,33 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             int16_t idx = fin_mod_const_idx(cmp, val);
             fin_mod_emit_uint8(cmp, fin_op_load_const);
             fin_mod_emit_uint16(cmp, idx);
-            FIN_LOG("\tload_const %2d         // %s\n", idx, fin_str_cstr(str_expr->value));
+            FIN_LOG("\tload_const %2d         // \"%s\"\n", idx, fin_str_cstr(str_expr->value));
+            break;
+        }
+        case fin_ast_expr_type_str_interp: {
+            fin_ast_str_interp_expr* interp_expr = (fin_ast_str_interp_expr*)expr;
+            fin_mod_compile_expr(ctx, cmp, interp_expr->expr, NULL);
+            fin_str* type = fin_mod_resolve_type(ctx, cmp, interp_expr->expr, NULL);
+            if (strcmp(fin_str_cstr(type), "string") != 0) {
+                char signature[256];
+                signature[0] = '\0';
+                strcat(signature, "string(");
+                strcat(signature, fin_str_cstr(type));
+                strcat(signature, ")");
+                fin_str* sign = fin_str_create(ctx, signature, -1);
+                int16_t idx = fin_mod_bind_idx(cmp, sign);
+                fin_mod_emit_uint8(cmp, fin_op_call);
+                fin_mod_emit_uint16(cmp, idx);
+                FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
+            }
+            if (interp_expr->next) {
+                fin_mod_compile_expr(ctx, cmp, &interp_expr->next->base, NULL);
+                fin_str* sign = fin_str_create(ctx, "__op_add(string,string)", -1);
+                int16_t idx = fin_mod_bind_idx(cmp, sign);
+                fin_mod_emit_uint8(cmp, fin_op_call);
+                fin_mod_emit_uint16(cmp, idx);
+                FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
+            }
             break;
         }
         case fin_ast_expr_type_unary: {

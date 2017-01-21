@@ -108,6 +108,27 @@ static fin_ast_expr* fin_ast_parse_const_expr(fin_ctx* ctx, fin_lex* lex) {
     }
 }
 
+static fin_ast_expr* fin_ast_parse_str_interp_expr(fin_ctx* ctx, fin_lex* lex) {
+    fin_ast_str_interp_expr* expr = NULL;
+    fin_ast_str_interp_expr** tail = &expr;
+    fin_ast_expect(lex, fin_lex_type_quot);
+    while (!fin_lex_match(lex, fin_lex_type_quot)) {
+        fin_ast_expr* next = NULL;
+        if (fin_lex_get_type(lex) == fin_lex_type_string)
+            next = fin_ast_parse_const_expr(ctx, lex);
+        else if (fin_lex_match(lex, fin_lex_type_l_str_interp)) {
+            next = fin_ast_parse_expr(ctx, lex);
+            fin_ast_expect(lex, fin_lex_type_r_str_interp);
+        }
+        *tail = (fin_ast_str_interp_expr*)ctx->alloc(NULL, sizeof(fin_ast_str_interp_expr));
+        (*tail)->base.type = fin_ast_expr_type_str_interp;
+        (*tail)->expr = next;
+        (*tail)->next = NULL;
+        tail = &(*tail)->next;
+    }
+    return &expr->base;
+}
+
 static fin_ast_expr* fin_ast_parse_unary_expr(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_unary_type op;
     if (fin_lex_match(lex, fin_lex_type_plus))
@@ -128,10 +149,10 @@ static fin_ast_expr* fin_ast_parse_unary_expr(fin_ctx* ctx, fin_lex* lex) {
         return fin_ast_parse_const_expr(ctx, lex);
     else if (fin_lex_get_type(lex) == fin_lex_type_float)
         return fin_ast_parse_const_expr(ctx, lex);
-    else if (fin_lex_get_type(lex) == fin_lex_type_string)
-        return fin_ast_parse_const_expr(ctx, lex);
     else if (fin_lex_get_type(lex) == fin_lex_type_bool)
         return fin_ast_parse_const_expr(ctx, lex);
+    else if (fin_lex_get_type(lex) == fin_lex_type_quot)
+        return fin_ast_parse_str_interp_expr(ctx, lex);
     else {
         fin_ast_expr* id_expr = fin_ast_parse_id_expr(ctx, lex);
         return fin_lex_get_type(lex) == fin_lex_type_l_paren ? fin_ast_parse_invoke_expr(ctx, lex, id_expr) : id_expr;
