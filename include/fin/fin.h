@@ -16,8 +16,8 @@
 #   define FIN_CONFIG_COMPUTED_GOTO 1
 #endif
 
-#if !defined(NULL)
-    #define NULL ((void*)0)
+#ifndef NULL
+#   define NULL ((void*)0)
 #endif
 
 #define FIN_COUNT_OF(x) (sizeof(x) / sizeof((x)[0]))

@@ -7,6 +7,7 @@
 #include "fin_ctx.h"
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef struct fin_str {
     int32_t ref;
@@ -84,17 +85,14 @@ fin_str_pool* fin_str_pool_create(fin_alloc alloc) {
 }
 
 void fin_str_pool_destroy(fin_str_pool* pool) {
-    //temp
-    /*
     if (pool->count) {
         for (int32_t i=0; i<pool->capacity; i++) {
             fin_str_entry* entry = &pool->entries[i];
             if (entry->str)
                 printf("%d - %s\n", entry->str->ref, entry->str->cstr);
         }
-        assert(pool->count == 0);
+        //assert(pool->count == 0);
     }
-    */
 
     if (pool->entries)
         pool->alloc(pool->entries, 0);

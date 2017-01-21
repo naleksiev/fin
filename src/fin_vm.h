@@ -11,9 +11,9 @@
 typedef struct fin_vm       fin_vm;
 typedef struct fin_mod_func fin_mod_func;
 
-fin_vm* fin_vm_create(fin_alloc alloc);
+fin_vm* fin_vm_create(fin_ctx* ctx);
 void    fin_vm_destroy(fin_vm* vm);
-void    fin_vm_invoke(fin_ctx* ctx, fin_vm* vm, fin_mod_func* func);
+void    fin_vm_invoke(fin_vm* vm, fin_mod_func* func);
 
 #endif //#ifndef FIN_VM_H
 

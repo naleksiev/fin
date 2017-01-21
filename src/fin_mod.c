@@ -21,10 +21,10 @@ typedef struct fin_mod_type {
     int32_t  fields;
 } fin_mod_type;
 
-typedef struct fin_mod_local {
+typedef struct fin_mod_var {
     fin_str* name;
     fin_str* type;
-} fin_mod_local;
+} fin_mod_var;
 
 typedef struct fin_mod_compiler {
     fin_mod*      mod;
@@ -33,9 +33,9 @@ typedef struct fin_mod_compiler {
     uint8_t*      code_begin;
     uint8_t*      code_end;
     uint8_t       code_storage[1024];
-    fin_mod_local locals[256];
+    fin_mod_var   locals[256];
     int32_t       locals_count;
-    fin_str*      params[32];
+    fin_mod_var   params[32];
     int32_t       params_count;
 } fin_mod_compiler;
 
@@ -111,7 +111,7 @@ static int32_t fin_mod_resolve_local(fin_mod_compiler* cmp, fin_str* id) {
 
 static int32_t fin_mod_resolve_arg(fin_mod_compiler* cmp, fin_str* id) {
     for (int32_t i=0; i<cmp->params_count; i++)
-        if (cmp->params[i] == id)
+        if (cmp->params[i].name == id)
             return i;
     return -1;
 }
@@ -141,10 +141,27 @@ static fin_str* fin_mod_invoke_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
     return fin_str_create(ctx, signature, -1);
 }
 
-static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_binary_expr* expr) {
+static fin_str* fin_mod_unary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_unary_expr* unary_expr) {
+char sign[128];
+    sign[0] = '\0';
+    switch (unary_expr->op) {
+        case fin_ast_unary_type_pos:  strcat(sign, "__op_pos"); break;
+        case fin_ast_unary_type_neg:  strcat(sign, "__op_neg"); break;
+        case fin_ast_unary_type_not:  strcat(sign, "__op_not"); break;
+        case fin_ast_unary_type_bnot: strcat(sign, "__op_bnot"); break;
+        case fin_ast_unary_type_inc:  strcat(sign, "__op_inc"); break;
+        case fin_ast_unary_type_dec:  strcat(sign, "__op_dec"); break;
+    }
+    strcat(sign, "(");
+    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, unary_expr->expr, NULL)));
+    strcat(sign, ")");
+    return fin_str_create(ctx, sign, -1);
+}
+
+static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_binary_expr* bin_expr) {
     char sign[128];
     sign[0] = '\0';
-    switch (expr->op) {
+    switch (bin_expr->op) {
         case fin_ast_binary_type_add:  strcat(sign, "__op_add");  break;
         case fin_ast_binary_type_sub:  strcat(sign, "__op_sub");  break;
         case fin_ast_binary_type_mul:  strcat(sign, "__op_mul");  break;
@@ -165,9 +182,9 @@ static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
         case fin_ast_binary_type_or:   strcat(sign, "__op_or");   break;
     }
     strcat(sign, "(");
-    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, expr->lhs, NULL)));
+    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->lhs, NULL)));
     strcat(sign, ",");
-    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, expr->rhs, NULL)));
+    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->rhs, NULL)));
     strcat(sign, ")");
     return fin_str_create(ctx, sign, -1);
 }
@@ -181,7 +198,7 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
                 return cmp->locals[local_idx].type;
             int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
             if (param_idx >= 0)
-                return fin_str_create(ctx, "int", -1); // hack
+                return cmp->params[param_idx].type;
             assert(0);
         }
         case fin_ast_expr_type_member: {
@@ -204,8 +221,10 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             return fin_str_create(ctx, "string", -1);
         }
         case fin_ast_expr_type_unary: {
-            fin_ast_unary_expr* un_expr = (fin_ast_unary_expr*)expr;
-            return fin_mod_resolve_type(ctx, cmp, un_expr->expr, NULL);
+            fin_ast_unary_expr* unary_expr = (fin_ast_unary_expr*)expr;
+            fin_str* sign = fin_mod_unary_get_signature(ctx, cmp, unary_expr);
+            fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
+            return func->ret_type;
         }
         case fin_ast_expr_type_binary: {
             fin_ast_binary_expr* bin_expr = (fin_ast_binary_expr*)expr;
@@ -320,7 +339,15 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             break;
         }
         case fin_ast_expr_type_unary: {
-            FIN_LOG("\t<fin_ast_expr_type_unary>\n");
+            fin_ast_unary_expr* unary_expr = (fin_ast_unary_expr*)expr;
+            fin_mod_compile_expr(ctx, cmp, unary_expr->expr, NULL);
+
+            fin_str* sign = fin_mod_unary_get_signature(ctx, cmp, unary_expr);
+            int16_t idx = fin_mod_bind_idx(cmp, sign);
+            fin_mod_emit_uint8(cmp, fin_op_call);
+            fin_mod_emit_uint16(cmp, idx);
+            FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
+
             break;
         }
         case fin_ast_expr_type_binary: {
@@ -501,8 +528,11 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     cmp.locals_count = 0;
     cmp.params_count = 0;
 
-    for (fin_ast_param* param = func->params; param; param = param->next)
-        cmp.params[cmp.params_count++] = param->name;
+    for (fin_ast_param* param = func->params; param; param = param->next) {
+        fin_mod_var* var = &cmp.params[cmp.params_count++];
+        var->name = param->name;
+        var->type = param->type->name;
+    }
 
     fin_mod_compile_stmt(ctx, &cmp, &func->block->base);
     if (cmp.code == cmp.code_begin || cmp.code[-1] != fin_op_return) {

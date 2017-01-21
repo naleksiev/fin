@@ -15,17 +15,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static int32_t fin_allocs = 0;
+
 static void* fin_allocator(void* ptr, unsigned int size) {
     if (ptr) {
         if (size) {
             return realloc(ptr, size);
         }
         else {
+            fin_allocs--;
             free(ptr);
             return NULL;
         }
     }
     else if (size) {
+        fin_allocs++;
         return malloc(size);
     }
     return NULL;
@@ -57,13 +61,16 @@ void fin_ctx_destroy(fin_ctx* ctx) {
 
     fin_str_pool_destroy(ctx->pool);
     ctx->alloc(ctx, 0);
+
+    if (fin_allocs)
+        printf("allocations: %d\n", fin_allocs);
 }
 
 void fin_ctx_eval_str(fin_ctx* ctx, const char* cstr) {
     fin_mod* mod = fin_mod_compile(ctx, cstr);
     if (mod && mod->entry) {
-        fin_vm* vm = fin_vm_create(ctx->alloc);
-        fin_vm_invoke(ctx, vm, mod->entry);
+        fin_vm* vm = fin_vm_create(ctx);
+        fin_vm_invoke(vm, mod->entry);
         fin_vm_destroy(vm);
     }
 }
