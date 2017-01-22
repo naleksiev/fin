@@ -13,8 +13,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FIN_LOG(...) printf(__VA_ARGS__)
-//#define FIN_LOG(...)
+#if FIN_ASM
+#   define FIN_LOG(...) printf(__VA_ARGS__)
+#else
+#   define FIN_LOG(...)
+#endif
 
 typedef struct fin_mod_type {
     fin_str* name;

@@ -17,9 +17,15 @@ OPTIMIZE = -O0
 ifdef release
 	OPTIMIZE = -O3
 endif
+
+DEFINES =
+ifdef asm
+	DEFINES += -DFIN_ASM=1
+endif
+
 .build/fin.o: test/fin.c src/*.h src/*.c src/mod/*.h src/mod/*.c include/fin/fin.h
 	mkdir -p .build
-	$(CC) $(SANITIZER) $(OPTIMIZE) -std=c99 -I include test/fin.c src/*.c src/mod/*.c -o .build/fin.o -lm -Wno-typedef-redefinition
+	$(CC) $(SANITIZER) $(OPTIMIZE) $(DEFINES) -std=c99 -I include test/fin.c src/*.c src/mod/*.c -o .build/fin.o -lm -Wno-typedef-redefinition
 
 all: .build/fin.o
 
