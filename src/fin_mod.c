@@ -93,15 +93,6 @@ static fin_mod_func* fin_mod_find_func(fin_ctx* ctx, fin_mod* mod, fin_str* sign
     return NULL;
 }
 
-static fin_mod* fin_mod_resolve_module(fin_ctx* ctx, fin_mod* mod, fin_str* id) {
-    if (mod->name == id)
-        return mod;
-    for (fin_mod* m = ctx->mod; m; m = m->next)
-        if (m->name == id)
-            return m;
-    return NULL;
-}
-
 static int32_t fin_mod_resolve_local(fin_mod_compiler* cmp, fin_str* id) {
     for (int32_t i=0; i<cmp->locals_count; i++)
         if (cmp->locals[i].name == id)
