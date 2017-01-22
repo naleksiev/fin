@@ -636,6 +636,12 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
             fin_str_destroy(mod->ctx, str_expr->value);
             break;
         }
+        case fin_ast_expr_type_str_interp: {
+            fin_ast_str_interp_expr* interp_expr = (fin_ast_str_interp_expr*)expr;
+            fin_ast_expr_destroy(mod, &interp_expr->next->base);
+            fin_ast_expr_destroy(mod, interp_expr->expr);
+            break;
+        }
         case fin_ast_expr_type_unary: {
             fin_ast_unary_expr* un_expr = (fin_ast_unary_expr*)expr;
             fin_ast_expr_destroy(mod, un_expr->expr);
