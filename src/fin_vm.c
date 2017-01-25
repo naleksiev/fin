@@ -50,8 +50,11 @@ typedef struct fin_vm {
 
 void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack);
 
-void fin_vm_interpret(fin_ctx* ctx, fin_mod* mod, uint8_t* ip, fin_val* stack, fin_val* args, int32_t locals) {
-    fin_val* top = stack + locals;
+void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
+    fin_mod* mod  = func->mod;
+    fin_val* args = stack - func->args;
+    fin_val* top  = stack + func->locals;
+    uint8_t* ip   = func->code;
 
     FIN_VM_LOOP_BEGIN() {
         FIN_VM_OP(fin_op_load_const) {
@@ -133,7 +136,7 @@ inline void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) 
     if (func->is_native)
         (*func->func)(ctx, stack - func->args);
     else
-        fin_vm_interpret(ctx, func->mod, func->code, stack, stack - func->args, func->locals);
+        fin_vm_interpret(ctx, func, stack);
 }
 
 void fin_vm_invoke(fin_vm* vm, fin_mod_func* func) {
