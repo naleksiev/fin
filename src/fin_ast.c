@@ -595,7 +595,7 @@ fin_ast_module* fin_ast_parse(fin_ctx* ctx, const char* str) {
     fin_ast_module* module = (fin_ast_module*)ctx->alloc(NULL, sizeof(fin_ast_module));
     module->ctx = ctx;
     module->name = name;
-    module->types = NULL;
+    module->types = types;
     module->funcs = funcs;
     return module;
 }
