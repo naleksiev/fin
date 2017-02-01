@@ -14,6 +14,7 @@
     #define FIN_VM_LOOP_BEGIN() static void* goto_table[] = { \
                                     &&fin_op_load_const,      \
                                     &&fin_op_load_arg,        \
+                                    &&fin_op_store_arg,       \
                                     &&fin_op_load_local,      \
                                     &&fin_op_store_local,     \
                                     &&fin_op_load_field,      \
@@ -65,6 +66,10 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
         }
         FIN_VM_OP(fin_op_load_arg) {
             *top++ = args[*ip++];
+            FIN_VM_NEXT();
+        }
+        FIN_VM_OP(fin_op_store_arg) {
+            args[*ip++] = *--top;
             FIN_VM_NEXT();
         }
         FIN_VM_OP(fin_op_load_local) {
