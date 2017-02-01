@@ -19,15 +19,16 @@
 #   define FIN_LOG(...)
 #endif
 
-typedef struct fin_mod_type {
-    fin_str* name;
-    int32_t  fields;
-} fin_mod_type;
-
-typedef struct fin_mod_var {
+typedef struct fin_mod_pair {
     fin_str* name;
     fin_str* type;
-} fin_mod_var;
+} fin_mod_pair;
+
+typedef struct fin_mod_type {
+    fin_str*      name;
+    int32_t       fields_count;
+    fin_mod_pair* fields;
+} fin_mod_type;
 
 typedef struct fin_mod_compiler {
     fin_mod*      mod;
@@ -36,9 +37,9 @@ typedef struct fin_mod_compiler {
     uint8_t*      code_begin;
     uint8_t*      code_end;
     uint8_t       code_storage[1024];
-    fin_mod_var   locals[256];
+    fin_mod_pair  locals[256];
     int32_t       locals_count;
-    fin_mod_var   params[32];
+    fin_mod_pair  params[32];
     int32_t       params_count;
 } fin_mod_compiler;
 
@@ -94,6 +95,33 @@ static fin_mod_func* fin_mod_find_func(fin_ctx* ctx, fin_mod* mod, fin_str* sign
         m = m->next;
     }
     return NULL;
+}
+
+static int32_t fin_mod_resolve_field(fin_ctx* ctx, fin_mod* mod, fin_str* type, fin_str* field) {
+    fin_mod_type* mod_type  = NULL;
+    for (int32_t i=0; i<mod->types_count; i++) {
+        if (mod->types[i].name == type) {
+            mod_type = &mod->types[i];
+            break;
+        }
+    }
+    if (mod_type) {
+        fin_mod* m = ctx->mod;
+        while (m) {
+            for (int32_t i=0; i<m->types_count; i++) {
+                if (m->types[i].name == type) {
+                    mod_type = &mod->types[i];
+                    break;
+                }
+            }
+            m = m->next;
+        }
+    }
+    for (int32_t i=0; i<mod_type->fields_count; i++) {
+        if (mod_type->fields[i].name == field)
+            return i;
+    }
+    return -1;
 }
 
 static int32_t fin_mod_resolve_local(fin_mod_compiler* cmp, fin_str* id) {
@@ -402,13 +430,38 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         case fin_ast_expr_type_assign: {
             fin_ast_assign_expr* assign_expr = (fin_ast_assign_expr*)expr;
             assert(assign_expr->op == fin_ast_assign_type_assign); // rest not supported yet
-            /*
-            if (assign_expr->lhs->type == fin_ast_expr_type_id) {
-                fin_ast_member_expr* member_expr = (fin_ast_member_expr*)assign_expr->lhs;
-                fin_mod_compile_expr(ctx, cmp, member_expr->primary);
-                fin_mod_compile_expr(ctx, cmp, assign_expr->rhs, NULL);
+            assert(assign_expr->lhs->type == fin_ast_expr_type_id);
+            fin_ast_id_expr* id_expr = (fin_ast_id_expr*)assign_expr->lhs;
+            if (id_expr->primary)
+                fin_mod_compile_expr(ctx, cmp, id_expr->primary, NULL);
+            fin_mod_compile_expr(ctx, cmp, assign_expr->rhs, NULL);
+            if (id_expr->primary) {
+                fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
+                fin_mod_type* type = NULL;
+                int32_t field_idx = fin_mod_resolve_field(ctx, cmp->mod, type_name, id_expr->name);
+                if (field_idx >= 0) {
+                    fin_mod_emit_uint8(cmp, fin_op_store_field);
+                    fin_mod_emit_uint8(cmp, field_idx);
+                    FIN_LOG("\tstore_fld  %2d         // %s\n", field_idx, fin_str_cstr(id_expr->name));
+                    break;
+                }
             }
-            */
+            else {
+                int32_t local_idx = fin_mod_resolve_local(cmp, id_expr->name);
+                if (local_idx >= 0) {
+                    fin_mod_emit_uint8(cmp, fin_op_store_local);
+                    fin_mod_emit_uint8(cmp, local_idx);
+                    FIN_LOG("\tstore_loc  %2d         // %s\n", local_idx, fin_str_cstr(id_expr->name));
+                    break;
+                }
+                int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
+                if (param_idx >= 0) {
+                    fin_mod_emit_uint8(cmp, fin_op_store_arg);
+                    fin_mod_emit_uint8(cmp, param_idx);
+                    FIN_LOG("\tstore_arg  %2d         // %s\n", param_idx, fin_str_cstr(id_expr->name));
+                    break;
+                }
+            }
             break;
         }
         default:
@@ -519,9 +572,9 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     cmp.params_count = 0;
 
     for (fin_ast_param* param = func->params; param; param = param->next) {
-        fin_mod_var* var = &cmp.params[cmp.params_count++];
-        var->name = param->name;
-        var->type = param->type->name;
+        fin_mod_pair* p = &cmp.params[cmp.params_count++];
+        p->name = param->name;
+        p->type = param->type->name;
     }
 
     fin_mod_compile_stmt(ctx, &cmp, &func->block->base);
@@ -538,15 +591,25 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     FIN_LOG("\n");
 }
 
-static void fin_mod_compile_type(fin_mod_type* out_type, fin_ast_type* type) {
+static void fin_mod_compile_type(fin_ctx* ctx, fin_ast_type* type, fin_mod_type* dest_type) {
     int32_t fields = 0;
     fin_ast_field* field = type->fields;
     while (field) {
         fields++;
         field = field->next;
     }
-    out_type->name = fin_str_clone(type->name);
-    out_type->fields = fields;
+    dest_type->name = fin_str_clone(type->name);
+    dest_type->fields_count = fields;
+    dest_type->fields = (fin_mod_pair*)ctx->alloc(NULL, sizeof(fin_mod_pair) * fields);
+
+    field = type->fields;
+    fin_mod_pair* field_pair = dest_type->fields;
+    while (field) {
+        field_pair->name = field->name;
+        field_pair->type = field->type->name;
+        field = field->next;
+        field_pair++;
+    }
 }
 
 static void fin_mod_register(fin_ctx* ctx, fin_mod* mod) {
@@ -657,7 +720,7 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
 
         int32_t idx = 0;
         for (fin_ast_type* type = module->types; type; type = type->next)
-            fin_mod_compile_type(&mod->types[idx++], type);
+            fin_mod_compile_type(ctx, type, &mod->types[idx++]);
     }
 
     if (mod->funcs_count) {

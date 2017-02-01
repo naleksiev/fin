@@ -9,6 +9,7 @@
 typedef enum fin_op {
     fin_op_load_const,
     fin_op_load_arg,
+    fin_op_store_arg,
     fin_op_load_local,
     fin_op_store_local,
     fin_op_load_field,
