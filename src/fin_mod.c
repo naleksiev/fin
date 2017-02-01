@@ -42,7 +42,7 @@ typedef struct fin_mod_compiler {
     int32_t       params_count;
 } fin_mod_compiler;
 
-static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr, fin_ast_expr* primary);
+static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr);
 
 static void fin_mod_ensure(fin_mod_compiler* cmp, int32_t size) {
     assert(size > cmp->code - cmp->code_end);
@@ -110,33 +110,30 @@ static int32_t fin_mod_resolve_arg(fin_mod_compiler* cmp, fin_str* id) {
     return -1;
 }
 
-static fin_str* fin_mod_invoke_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_invoke_expr* expr, fin_ast_expr* primary) {
-    fin_ast_id_expr* identifier = expr->id;
-
-    assert(primary == NULL || primary->type == fin_ast_expr_type_id);
-    fin_ast_id_expr* id_expr = (fin_ast_id_expr*)primary;
-
+static fin_str* fin_mod_invoke_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_invoke_expr* expr) {
     char signature[128];
     signature[0] = '\0';
-    if (id_expr) {
+    if (expr->id->type == fin_ast_expr_type_id) {
+        fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr->id;
+        if (id_expr->primary && id_expr->primary->type == fin_ast_expr_type_id) {
+            fin_ast_id_expr* prim_id_expr = (fin_ast_id_expr*)id_expr->primary;
+            strcat(signature, fin_str_cstr(prim_id_expr->name));
+            strcat(signature, ".");
+        }
         strcat(signature, fin_str_cstr(id_expr->name));
-        strcat(signature, ".");
     }
-    strcat(signature, fin_str_cstr(identifier->name));
-
     strcat(signature, "(");
     for (fin_ast_arg_expr* e = expr->args; e; e = e->next) {
         if (e != expr->args)
             strcat(signature, ",");
-        strcat(signature, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, &e->base, primary)));
+        strcat(signature, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, &e->base)));
     }
     strcat(signature, ")");
-
     return fin_str_create(ctx, signature, -1);
 }
 
 static fin_str* fin_mod_unary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_unary_expr* unary_expr) {
-char sign[128];
+    char sign[128];
     sign[0] = '\0';
     switch (unary_expr->op) {
         case fin_ast_unary_type_pos:  strcat(sign, "__op_pos"); break;
@@ -147,7 +144,7 @@ char sign[128];
         case fin_ast_unary_type_dec:  strcat(sign, "__op_dec"); break;
     }
     strcat(sign, "(");
-    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, unary_expr->expr, NULL)));
+    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, unary_expr->expr)));
     strcat(sign, ")");
     return fin_str_create(ctx, sign, -1);
 }
@@ -176,14 +173,14 @@ static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
         case fin_ast_binary_type_or:   strcat(sign, "__op_or");   break;
     }
     strcat(sign, "(");
-    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->lhs, NULL)));
+    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->lhs)));
     strcat(sign, ",");
-    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->rhs, NULL)));
+    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->rhs)));
     strcat(sign, ")");
     return fin_str_create(ctx, sign, -1);
 }
 
-static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr, fin_ast_expr* primary) {
+static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr) {
     switch (expr->type) {
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
@@ -194,10 +191,6 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             if (param_idx >= 0)
                 return cmp->params[param_idx].type;
             assert(0);
-        }
-        case fin_ast_expr_type_member: {
-            fin_ast_member_expr* member_expr = (fin_ast_member_expr*)expr;
-            return fin_mod_resolve_type(ctx, cmp, member_expr->member, member_expr->primary);
         }
         case fin_ast_expr_type_bool: {
             return fin_str_create(ctx, "bool", -1);
@@ -228,18 +221,18 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
         }
         case fin_ast_expr_type_cond: {
             fin_ast_cond_expr* cond_expr = (fin_ast_cond_expr*)expr;
-            fin_str* true_type = fin_mod_resolve_type(ctx, cmp, cond_expr->true_expr, NULL);
-            fin_str* false_type = fin_mod_resolve_type(ctx, cmp, cond_expr->false_expr, NULL);
+            fin_str* true_type = fin_mod_resolve_type(ctx, cmp, cond_expr->true_expr);
+            fin_str* false_type = fin_mod_resolve_type(ctx, cmp, cond_expr->false_expr);
             assert(true_type == false_type);
             return true_type;
         }
         case fin_ast_expr_type_arg: {
             fin_ast_arg_expr* arg_expr = (fin_ast_arg_expr*)expr;
-            return fin_mod_resolve_type(ctx, cmp, arg_expr->expr, NULL);
+            return fin_mod_resolve_type(ctx, cmp, arg_expr->expr);
         }
         case fin_ast_expr_type_invoke: {
             fin_ast_invoke_expr* invoke_expr = (fin_ast_invoke_expr*)expr;
-            fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr, primary);
+            fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr);
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
             return func->ret_type;
         }
@@ -309,7 +302,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         case fin_ast_expr_type_str_interp: {
             fin_ast_str_interp_expr* interp_expr = (fin_ast_str_interp_expr*)expr;
             fin_mod_compile_expr(ctx, cmp, interp_expr->expr, NULL);
-            fin_str* type = fin_mod_resolve_type(ctx, cmp, interp_expr->expr, NULL);
+            fin_str* type = fin_mod_resolve_type(ctx, cmp, interp_expr->expr);
             if (strcmp(fin_str_cstr(type), "string") != 0) {
                 char signature[256];
                 signature[0] = '\0';
@@ -399,20 +392,23 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             for (fin_ast_arg_expr* e = invoke_expr->args; e; e = e->next)
                 fin_mod_compile_expr(ctx, cmp, &e->base, NULL);
 
-            fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr, primary);
+            fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr);
             int16_t idx = fin_mod_bind_idx(cmp, sign);
             fin_mod_emit_uint8(cmp, fin_op_call);
             fin_mod_emit_uint16(cmp, idx);
             FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
             break;
         }
-        case fin_ast_expr_type_member: {
-            fin_ast_member_expr* member_expr = (fin_ast_member_expr*)expr;
-            fin_mod_compile_expr(ctx, cmp, member_expr->member, member_expr->primary);
-            break;
-        }
         case fin_ast_expr_type_assign: {
-            assert(0);
+            fin_ast_assign_expr* assign_expr = (fin_ast_assign_expr*)expr;
+            assert(assign_expr->op == fin_ast_assign_type_assign); // rest not supported yet
+            /*
+            if (assign_expr->lhs->type == fin_ast_expr_type_id) {
+                fin_ast_member_expr* member_expr = (fin_ast_member_expr*)assign_expr->lhs;
+                fin_mod_compile_expr(ctx, cmp, member_expr->primary);
+                fin_mod_compile_expr(ctx, cmp, assign_expr->rhs, NULL);
+            }
+            */
             break;
         }
         default:
@@ -598,7 +594,7 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
         funcs[i].code_length = 0;
         funcs[i].args = 0;
 
-        // ret_type name "(" (arg ("," arg)* )? ")"
+        // ret_type name "(" arg? ("," arg)* ")"
         fin_lex* lex = fin_lex_create(ctx->alloc, descs[i].sign);
 
         char signature[256];

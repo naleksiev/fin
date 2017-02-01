@@ -15,7 +15,6 @@ typedef struct fin_ast_type_ref {
 
 typedef enum fin_ast_expr_type {
     fin_ast_expr_type_id,
-    fin_ast_expr_type_member,
     fin_ast_expr_type_bool,
     fin_ast_expr_type_int,
     fin_ast_expr_type_float,
@@ -34,15 +33,10 @@ typedef struct fin_ast_expr {
 } fin_ast_expr;
 
 typedef struct fin_ast_id_expr {
-    fin_ast_expr base;
-    fin_str*     name;
-} fin_ast_id_expr;
-
-typedef struct fin_ast_member_expr {
-    fin_ast_expr base;
+    fin_ast_expr  base;
     fin_ast_expr* primary;
-    fin_ast_expr* member;
-} fin_ast_member_expr;
+    fin_str*      name;
+} fin_ast_id_expr;
 
 typedef struct fin_ast_bool_expr {
     fin_ast_expr base;
@@ -154,7 +148,7 @@ typedef struct fin_ast_assign_expr {
 
 typedef struct fin_ast_invoke_expr {
     fin_ast_expr      base;
-    fin_ast_id_expr*  id;
+    fin_ast_expr*     id;
     fin_ast_arg_expr* args;
 } fin_ast_invoke_expr;
 

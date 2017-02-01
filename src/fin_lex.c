@@ -32,30 +32,23 @@ typedef struct fin_lex_token {
     int32_t      line;
 } fin_lex_token;
 
-typedef enum fin_lex_scope_type {
-    fin_lex_scope_type_global,
-    fin_lex_scope_type_string,
-    fin_lex_scope_type_interp
-} fin_lex_scope_type;
-
-typedef struct fin_lex_scope {
-    fin_lex_scope_type type;
-    const char*        cstr;
-} fin_lex_scope;
+typedef enum fin_lex_state_type {
+    fin_lex_state_type_global,
+    fin_lex_state_type_string,
+    fin_lex_state_type_interp
+} fin_lex_state_type;
 
 typedef struct fin_lex_state {
-    const char*   cstr;
-    int32_t       line;
-    fin_lex_token token;
+    fin_lex_state_type type;
+    const char*        cstr;
 } fin_lex_state;
 
 typedef struct fin_lex {
     const char*   cstr;
     int32_t       line;
     fin_lex_token token;
-    fin_lex_state state;
-    fin_lex_scope scopes[16];
-    int32_t       scope_idx;
+    fin_lex_state states[16];
+    int32_t       state_idx;
 } fin_lex;
 
 static bool fin_lex_is_digit(char c) {
@@ -134,9 +127,9 @@ static fin_lex_token fin_lex_create_string_token(fin_lex* lex) {
                     token.len = (int32_t)(lex->cstr - start);
                     return token;
                 }
-                fin_lex_scope* scope = &lex->scopes[++lex->scope_idx];
-                scope->type = fin_lex_scope_type_interp;
-                scope->cstr = lex->cstr;
+                fin_lex_state* state = &lex->states[++lex->state_idx];
+                state->type = fin_lex_state_type_interp;
+                state->cstr = lex->cstr;
                 return fin_lex_create_token(lex, fin_lex_type_l_str_interp);
             }
             case '"': {
@@ -149,7 +142,7 @@ static fin_lex_token fin_lex_create_string_token(fin_lex* lex) {
                     token.len = (int32_t)(lex->cstr - start);
                     return token;
                 }
-                lex->scope_idx--;
+                lex->state_idx--;
                 return fin_lex_create_token(lex, fin_lex_type_quot);
             }
         }
@@ -184,9 +177,9 @@ static void fin_lex_skip_whitespaces(fin_lex* lex) {
 };
 
 static fin_lex_token fin_lex_next_token(fin_lex* lex) {
-    fin_lex_scope scope = lex->scopes[lex->scope_idx];
+    fin_lex_state state = lex->states[lex->state_idx];
 
-    if (scope.type == fin_lex_scope_type_string) {
+    if (state.type == fin_lex_state_type_string) {
         return fin_lex_create_string_token(lex);
     }
 
@@ -250,13 +243,13 @@ static fin_lex_token fin_lex_next_token(fin_lex* lex) {
                 lex->line++;
                 break;
             case '"':
-                lex->scope_idx++;
-                lex->scopes[lex->scope_idx].cstr = lex->cstr - 1;
-                lex->scopes[lex->scope_idx].type = fin_lex_scope_type_string;
+                lex->state_idx++;
+                lex->states[lex->state_idx].cstr = lex->cstr - 1;
+                lex->states[lex->state_idx].type = fin_lex_state_type_string;
                 return fin_lex_create_token(lex, fin_lex_type_quot);
             case '}':
-                if (lex->scopes[lex->scope_idx].type == fin_lex_scope_type_interp) {
-                    lex->scope_idx--;
+                if (lex->states[lex->state_idx].type == fin_lex_state_type_interp) {
+                    lex->state_idx--;
                     return fin_lex_create_token(lex, fin_lex_type_r_str_interp);
                 }
                 return fin_lex_create_token(lex, fin_lex_type_r_brace);
@@ -275,27 +268,15 @@ fin_lex* fin_lex_create(fin_alloc alloc, const char* cstr) {
     fin_lex* lex = (fin_lex*)alloc(NULL, sizeof(fin_lex));
     lex->cstr = cstr;
     lex->line = 1;
-    lex->scope_idx = 0;
-    lex->scopes[0].type = fin_lex_scope_type_global;
-    lex->scopes[0].cstr = cstr;
+    lex->state_idx = 0;
+    lex->states[0].type = fin_lex_state_type_global;
+    lex->states[0].cstr = cstr;
     fin_lex_next(lex);
     return lex;
 }
 
 void fin_lex_destroy(fin_alloc alloc, fin_lex* lex) {
     alloc(lex, 0);
-}
-
-void fin_lex_store(fin_lex* lex) {
-    lex->state.cstr = lex->cstr;
-    lex->state.line = lex->line;
-    lex->state.token = lex->token;
-}
-
-void fin_lex_restore(fin_lex* lex) {
-    lex->cstr = lex->state.cstr;
-    lex->line = lex->state.line;
-    lex->token = lex->state.token;
 }
 
 void fin_lex_next(fin_lex* lex) {

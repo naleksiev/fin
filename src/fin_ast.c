@@ -9,7 +9,7 @@
 #include "fin_str.h"
 #include <assert.h>
 
-static fin_ast_expr* fin_ast_parse_expr(fin_ctx* ctx, fin_lex* lex);
+static fin_ast_expr* fin_ast_parse_expr(fin_ctx* ctx, fin_lex* lex, fin_ast_expr* expr);
 static fin_ast_stmt* fin_ast_parse_stmt(fin_ctx* ctx, fin_lex* lex);
 
 inline static fin_str* fin_str_from_lex(fin_ctx* ctx, fin_lex_str lex_str) {
@@ -36,7 +36,7 @@ static fin_ast_type_ref* fin_ast_parse_type_ref(fin_ctx* ctx, fin_lex* lex) {
 }
 
 static fin_ast_arg_expr* fin_ast_parse_arg_expr(fin_ctx* ctx, fin_lex* lex) {
-    fin_ast_expr* expr = fin_ast_parse_expr(ctx, lex);
+    fin_ast_expr* expr = fin_ast_parse_expr(ctx, lex, NULL);
     fin_ast_arg_expr* arg_expr = (fin_ast_arg_expr*)ctx->alloc(NULL, sizeof(fin_ast_arg_expr));
     arg_expr->base.type = fin_ast_expr_type_arg;
     arg_expr->expr = expr;
@@ -44,27 +44,20 @@ static fin_ast_arg_expr* fin_ast_parse_arg_expr(fin_ctx* ctx, fin_lex* lex) {
     return arg_expr;
 }
 
-static fin_ast_expr* fin_ast_parse_id_expr(fin_ctx* ctx, fin_lex* lex) {
+static fin_ast_expr* fin_ast_parse_id_expr(fin_ctx* ctx, fin_lex* lex, fin_ast_expr* primary) {
     fin_ast_id_expr* id_expr = (fin_ast_id_expr*)ctx->alloc(NULL, sizeof(fin_ast_id_expr));
     id_expr->base.type = fin_ast_expr_type_id;
+    id_expr->primary = primary;
     id_expr->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+    if (fin_lex_match(lex, fin_lex_type_dot))
+        return fin_ast_parse_id_expr(ctx, lex, &id_expr->base);
     return &id_expr->base;
 }
 
-static fin_ast_expr* fin_ast_parse_member_expr(fin_ctx* ctx, fin_lex* lex, fin_ast_expr* primary) {
-    fin_ast_member_expr* member_expr = (fin_ast_member_expr*)ctx->alloc(NULL, sizeof(fin_ast_member_expr));
-    member_expr->base.type = fin_ast_expr_type_member;
-    member_expr->primary = primary;
-    fin_ast_expect(lex, fin_lex_type_dot);
-    member_expr->member = fin_ast_parse_expr(ctx, lex);
-    return &member_expr->base;
-}
-
 static fin_ast_expr* fin_ast_parse_invoke_expr(fin_ctx* ctx, fin_lex* lex, fin_ast_expr* id) {
-    assert(id->type == fin_ast_expr_type_id);
     fin_ast_invoke_expr* invoke_expr = (fin_ast_invoke_expr*)ctx->alloc(NULL, sizeof(fin_ast_invoke_expr));
     invoke_expr->base.type = fin_ast_expr_type_invoke;
-    invoke_expr->id = (fin_ast_id_expr*)id;
+    invoke_expr->id = id;
     fin_ast_expect(lex, fin_lex_type_l_paren);
     fin_ast_arg_expr** tail = &invoke_expr->args;
     *tail = NULL;
@@ -117,7 +110,7 @@ static fin_ast_expr* fin_ast_parse_str_interp_expr(fin_ctx* ctx, fin_lex* lex) {
         if (fin_lex_get_type(lex) == fin_lex_type_string)
             next = fin_ast_parse_const_expr(ctx, lex);
         else if (fin_lex_match(lex, fin_lex_type_l_str_interp)) {
-            next = fin_ast_parse_expr(ctx, lex);
+            next = fin_ast_parse_expr(ctx, lex, NULL);
             fin_ast_expect(lex, fin_lex_type_r_str_interp);
         }
         *tail = (fin_ast_str_interp_expr*)ctx->alloc(NULL, sizeof(fin_ast_str_interp_expr));
@@ -154,7 +147,7 @@ static fin_ast_expr* fin_ast_parse_unary_expr(fin_ctx* ctx, fin_lex* lex) {
     else if (fin_lex_get_type(lex) == fin_lex_type_quot)
         return fin_ast_parse_str_interp_expr(ctx, lex);
     else {
-        fin_ast_expr* id_expr = fin_ast_parse_id_expr(ctx, lex);
+        fin_ast_expr* id_expr = fin_ast_parse_id_expr(ctx, lex, NULL);
         return fin_lex_get_type(lex) == fin_lex_type_l_paren ? fin_ast_parse_invoke_expr(ctx, lex, id_expr) : id_expr;
     }
 
@@ -369,31 +362,20 @@ static fin_ast_expr* fin_ast_parse_assign_expr(fin_ctx* ctx, fin_lex* lex, fin_a
         assign_expr->op = fin_ast_assign_type_shr;
     else
         assert(0);
-    assign_expr->rhs = fin_ast_parse_expr(ctx, lex);
+    assign_expr->rhs = fin_ast_parse_expr(ctx, lex, NULL);
     return &assign_expr->base;
 }
 
-static fin_ast_expr* fin_ast_parse_expr(fin_ctx* ctx, fin_lex* lex) {
-    fin_ast_expr* expr = fin_ast_parse_cond_or_expr(ctx, lex);
+static fin_ast_expr* fin_ast_parse_expr(fin_ctx* ctx, fin_lex* lex, fin_ast_expr* expr) {
+    if (!expr)
+        expr = fin_ast_parse_cond_or_expr(ctx, lex);
     switch (fin_lex_get_type(lex)) {
         case fin_lex_type_question:
             return fin_ast_parse_cond_expr(ctx, lex, expr);
         case fin_lex_type_dot:
-            return fin_ast_parse_member_expr(ctx, lex, expr);
+            return fin_ast_parse_id_expr(ctx, lex, expr);
         case fin_lex_type_l_paren:
             return fin_ast_parse_invoke_expr(ctx, lex, expr);
-        case fin_lex_type_eq:
-        case fin_lex_type_plus_eq:
-        case fin_lex_type_minus_eq:
-        case fin_lex_type_star_eq:
-        case fin_lex_type_slash_eq:
-        case fin_lex_type_percent_eq:
-        case fin_lex_type_amp_eq:
-        case fin_lex_type_pipe_eq:
-        case fin_lex_type_caret_eq:
-        case fin_lex_type_lt_lt_eq:
-        case fin_lex_type_gt_gt_eq:
-            return fin_ast_parse_assign_expr(ctx, lex, expr);
         default:
             return expr;
     }
@@ -402,7 +384,7 @@ static fin_ast_expr* fin_ast_parse_expr(fin_ctx* ctx, fin_lex* lex) {
 static fin_ast_stmt* fin_ast_parse_if_stmt(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_expect(lex, fin_lex_type_if);
     fin_ast_expect(lex, fin_lex_type_l_paren);
-    fin_ast_expr* cond = fin_ast_parse_expr(ctx, lex);
+    fin_ast_expr* cond = fin_ast_parse_expr(ctx, lex, NULL);
     fin_ast_expect(lex, fin_lex_type_r_paren);
     fin_ast_stmt* true_stmt = fin_ast_parse_stmt(ctx, lex); fin_ast_stmt* false_stmt = NULL;
     if (fin_lex_match(lex, fin_lex_type_else))
@@ -415,7 +397,7 @@ static fin_ast_stmt* fin_ast_parse_if_stmt(fin_ctx* ctx, fin_lex* lex) {
 static fin_ast_stmt* fin_ast_parse_while_stmt(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_expect(lex, fin_lex_type_while);
     fin_ast_expect(lex, fin_lex_type_l_paren);
-    fin_ast_expr* cond = fin_ast_parse_expr(ctx, lex);
+    fin_ast_expr* cond = fin_ast_parse_expr(ctx, lex, NULL);
     fin_ast_expect(lex, fin_lex_type_r_paren);
     fin_ast_stmt* stmt = fin_ast_parse_stmt(ctx, lex);
     fin_ast_while_stmt* while_stmt = (fin_ast_while_stmt*)ctx->alloc(NULL, sizeof(fin_ast_while_stmt));
@@ -433,7 +415,7 @@ static fin_ast_stmt* fin_ast_parse_decl_stmt(fin_ctx* ctx, fin_lex* lex, fin_ast
     stmt->base.next = NULL;
     stmt->type = type;
     stmt->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
-    stmt->init = fin_lex_match(lex, fin_lex_type_eq) ? fin_ast_parse_expr(ctx, lex) : NULL;
+    stmt->init = fin_lex_match(lex, fin_lex_type_eq) ? fin_ast_parse_expr(ctx, lex, NULL) : NULL;
     fin_ast_expect(lex, fin_lex_type_semicolon);
     return &stmt->base;
 }
@@ -446,12 +428,28 @@ static fin_ast_stmt* fin_ast_parse_ret_stmt(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_expect(lex, fin_lex_type_return);
     if (fin_lex_match(lex, fin_lex_type_semicolon))
         return &stmt->base;
-    stmt->expr = fin_ast_parse_expr(ctx, lex);
+    stmt->expr = fin_ast_parse_expr(ctx, lex, NULL);
     fin_ast_expect(lex, fin_lex_type_semicolon);
     return &stmt->base;
 }
 
 static fin_ast_stmt* fin_ast_parse_expr_stmt(fin_ctx* ctx, fin_lex* lex, fin_ast_expr* expr) {
+    switch (fin_lex_get_type(lex)) {
+        case fin_lex_type_eq:
+        case fin_lex_type_plus_eq:
+        case fin_lex_type_minus_eq:
+        case fin_lex_type_star_eq:
+        case fin_lex_type_slash_eq:
+        case fin_lex_type_percent_eq:
+        case fin_lex_type_amp_eq:
+        case fin_lex_type_pipe_eq:
+        case fin_lex_type_caret_eq:
+        case fin_lex_type_lt_lt_eq:
+        case fin_lex_type_gt_gt_eq:
+            expr = fin_ast_parse_assign_expr(ctx, lex, expr);
+        default:
+            break;
+    }
     fin_ast_expr_stmt* stmt = (fin_ast_expr_stmt*)ctx->alloc(NULL, sizeof(fin_ast_expr_stmt));
     stmt->base.type = fin_ast_stmt_type_expr;
     stmt->base.next = NULL;
@@ -474,6 +472,32 @@ static fin_ast_block_stmt* fin_ast_parse_block_stmt(fin_ctx* ctx, fin_lex* lex) 
     return block;
 }
 
+static fin_ast_stmt* fin_ast_parse_expr_or_decl_stmt(fin_ctx* ctx, fin_lex* lex) {
+    fin_str* id1 = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+    fin_str* id2 = NULL;
+    if (fin_lex_match(lex, fin_lex_type_dot))
+        id2 = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+    if (fin_lex_get_type(lex) == fin_lex_type_name) {
+        fin_ast_type_ref* type = (fin_ast_type_ref*)ctx->alloc(NULL, sizeof(fin_ast_type_ref));
+        type->module = id2 ? id1 : NULL;
+        type->name = id2 ? id2 : id1;
+        return fin_ast_parse_decl_stmt(ctx, lex, type);
+    }
+    fin_ast_id_expr* id1_expr = (fin_ast_id_expr*)ctx->alloc(NULL, sizeof(fin_ast_id_expr));
+    id1_expr->base.type = fin_ast_expr_type_id;
+    id1_expr->name = id1;
+    fin_ast_expr* expr = &id1_expr->base;
+    if (id2) {
+        fin_ast_id_expr* id2_expr = (fin_ast_id_expr*)ctx->alloc(NULL, sizeof(fin_ast_id_expr));
+        id2_expr->base.type = fin_ast_expr_type_id;
+        id2_expr->primary = expr;
+        id2_expr->name = id2;
+        expr = &id2_expr->base;
+    }
+    expr = fin_ast_parse_expr(ctx, lex, expr);
+    return fin_ast_parse_expr_stmt(ctx, lex, expr);
+}
+
 static fin_ast_stmt* fin_ast_parse_stmt(fin_ctx* ctx, fin_lex* lex) {
     switch (fin_lex_get_type(lex)) {
         case fin_lex_type_l_brace:
@@ -492,15 +516,8 @@ static fin_ast_stmt* fin_ast_parse_stmt(fin_ctx* ctx, fin_lex* lex) {
 //            return fin_ast_parse_continue_stmt(lex);
         case fin_lex_type_return:
             return fin_ast_parse_ret_stmt(ctx, lex);
-        case fin_lex_type_name: {
-            fin_lex_store(lex);
-            fin_ast_type_ref* type = fin_ast_parse_type_ref(ctx, lex);
-            if (fin_lex_get_type(lex) == fin_lex_type_name)
-                return fin_ast_parse_decl_stmt(ctx, lex, type);
-            fin_lex_restore(lex);
-            fin_ast_expr* expr = fin_ast_parse_expr(ctx, lex);
-            return fin_ast_parse_expr_stmt(ctx, lex, expr);
-        }
+        case fin_lex_type_name:
+            return fin_ast_parse_expr_or_decl_stmt(ctx, lex);
         default:
             assert(0);
     }
@@ -613,13 +630,8 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
     switch (expr->type) {
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
+            fin_ast_expr_destroy(mod, id_expr->primary);
             fin_str_destroy(mod->ctx, id_expr->name);
-            break;
-        }
-        case fin_ast_expr_type_member: {
-            fin_ast_member_expr* member_expr = (fin_ast_member_expr*)expr;
-            fin_ast_expr_destroy(mod, member_expr->primary);
-            fin_ast_expr_destroy(mod, member_expr->member);
             break;
         }
         case fin_ast_expr_type_bool: {

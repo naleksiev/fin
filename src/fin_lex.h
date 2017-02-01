@@ -88,8 +88,6 @@ typedef struct fin_lex fin_lex;
 
 fin_lex*     fin_lex_create(fin_alloc alloc, const char* cstr);
 void         fin_lex_destroy(fin_alloc alloc, fin_lex* lex);
-void         fin_lex_store(fin_lex* lex);
-void         fin_lex_restore(fin_lex* lex);
 void         fin_lex_next(fin_lex* lex);
 bool         fin_lex_match(fin_lex* lex, fin_lex_type type);
 fin_lex_type fin_lex_get_type(fin_lex* lex);
