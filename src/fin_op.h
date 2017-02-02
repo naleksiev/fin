@@ -19,6 +19,7 @@ typedef enum fin_op {
     fin_op_branch_if_n,
     fin_op_return,
     fin_op_pop,
+    fin_op_new,
 } fin_op;
 
 #endif //#ifndef FIN_OP_H

@@ -23,7 +23,8 @@
                                     &&fin_op_branch,          \
                                     &&fin_op_branch_if_n,     \
                                     &&fin_op_return,          \
-                                    &&fin_op_pop              \
+                                    &&fin_op_pop,             \
+                                    &&fin_op_new              \
                                 };                            \
                                 FIN_VM_NEXT();
     #define FIN_VM_LOOP_END()
@@ -119,6 +120,11 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
         }
         FIN_VM_OP(fin_op_pop) {
             top--;
+            FIN_VM_NEXT();
+        }
+        FIN_VM_OP(fin_op_new) {
+            top->o = fin_obj_create(ctx->alloc, *ip++);
+            top++;
             FIN_VM_NEXT();
         }
     }
