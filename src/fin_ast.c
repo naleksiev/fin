@@ -334,6 +334,21 @@ static fin_ast_expr* fin_ast_parse_cond_expr(fin_ctx* ctx, fin_lex* lex, fin_ast
     return &cond_expr->base;
 }
 
+static fin_ast_expr* fin_ast_parse_init_expr(fin_ctx* ctx, fin_lex* lex) {
+    fin_ast_init_expr* init_expr = (fin_ast_init_expr*)ctx->alloc(NULL, sizeof(fin_ast_init_expr));
+    init_expr->base.type = fin_ast_expr_type_init;
+    fin_ast_expect(lex, fin_lex_type_l_brace);
+    fin_ast_arg_expr** tail = &init_expr->args;
+    *tail = NULL;
+    while (!fin_lex_match(lex, fin_lex_type_r_brace)) {
+        if (init_expr->args)
+            fin_ast_expect(lex, fin_lex_type_comma);
+        *tail = fin_ast_parse_arg_expr(ctx, lex);
+        tail = &(*tail)->next;
+    }
+    return &init_expr->base;
+}
+
 static fin_ast_expr* fin_ast_parse_assign_expr(fin_ctx* ctx, fin_lex* lex, fin_ast_expr* lhs) {
     fin_ast_assign_expr* assign_expr = (fin_ast_assign_expr*)ctx->alloc(NULL, sizeof(fin_ast_assign_expr));
     assign_expr->base.type = fin_ast_expr_type_assign;
@@ -362,7 +377,11 @@ static fin_ast_expr* fin_ast_parse_assign_expr(fin_ctx* ctx, fin_lex* lex, fin_a
         assign_expr->op = fin_ast_assign_type_shr;
     else
         assert(0);
-    assign_expr->rhs = fin_ast_parse_expr(ctx, lex, NULL);
+
+    if (fin_lex_get_type(lex) == fin_lex_type_l_brace)
+        assign_expr->rhs = fin_ast_parse_init_expr(ctx, lex);
+    else
+        assign_expr->rhs = fin_ast_parse_expr(ctx, lex, NULL);
     return &assign_expr->base;
 }
 

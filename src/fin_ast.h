@@ -25,6 +25,7 @@ typedef enum fin_ast_expr_type {
     fin_ast_expr_type_cond,
     fin_ast_expr_type_arg,
     fin_ast_expr_type_invoke,
+    fin_ast_expr_type_init,
     fin_ast_expr_type_assign,
 } fin_ast_expr_type;
 
@@ -139,18 +140,23 @@ typedef enum fin_ast_assign_type {
     fin_ast_assign_type_shr,
 } fin_ast_assign_type;
 
+typedef struct fin_ast_invoke_expr {
+    fin_ast_expr      base;
+    fin_ast_expr*     id;
+    fin_ast_arg_expr* args;
+} fin_ast_invoke_expr;
+
+typedef struct fin_ast_init_expr {
+    fin_ast_expr      base;
+    fin_ast_arg_expr* args;
+} fin_ast_init_expr;
+
 typedef struct fin_ast_assign_expr {
     fin_ast_expr        base;
     fin_ast_expr*       lhs;
     fin_ast_expr*       rhs;
     fin_ast_assign_type op;
 } fin_ast_assign_expr;
-
-typedef struct fin_ast_invoke_expr {
-    fin_ast_expr      base;
-    fin_ast_expr*     id;
-    fin_ast_arg_expr* args;
-} fin_ast_invoke_expr;
 
 typedef enum fin_ast_stmt_type {
     fin_ast_stmt_type_expr,
