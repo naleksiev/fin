@@ -431,7 +431,13 @@ static fin_ast_stmt* fin_ast_parse_decl_stmt(fin_ctx* ctx, fin_lex* lex, fin_ast
     stmt->base.next = NULL;
     stmt->type = type;
     stmt->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
-    stmt->init = fin_lex_match(lex, fin_lex_type_eq) ? fin_ast_parse_expr(ctx, lex, NULL) : NULL;
+    stmt->init = NULL;
+    if (fin_lex_match(lex, fin_lex_type_eq)) {
+        if (fin_lex_get_type(lex) == fin_lex_type_l_brace)
+            stmt->init = fin_ast_parse_init_expr(ctx, lex);
+        else
+            stmt->init = fin_ast_parse_expr(ctx, lex, NULL);
+    }
     fin_ast_expect(lex, fin_lex_type_semicolon);
     return &stmt->base;
 }
