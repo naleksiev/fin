@@ -378,10 +378,7 @@ static fin_ast_expr* fin_ast_parse_assign_expr(fin_ctx* ctx, fin_lex* lex, fin_a
     else
         assert(0);
 
-    if (fin_lex_get_type(lex) == fin_lex_type_l_brace)
-        assign_expr->rhs = fin_ast_parse_init_expr(ctx, lex);
-    else
-        assign_expr->rhs = fin_ast_parse_expr(ctx, lex, NULL);
+    assign_expr->rhs = fin_ast_parse_expr(ctx, lex, NULL);
     return &assign_expr->base;
 }
 
