@@ -9,7 +9,7 @@
 #include <string.h>
 
 static const struct {
-    const char* token;
+    const char* cstr;
     fin_lex_type type;
 } fin_lex_keywords [] = {
     { "void", fin_lex_type_void },
@@ -161,7 +161,8 @@ static fin_lex_token fin_lex_create_name_token(fin_lex* lex) {
     token.len = (int32_t)(lex->cstr - token.cstr);
 
     for (int32_t i=0; i<FIN_COUNT_OF(fin_lex_keywords); i++) {
-        if (strncmp(fin_lex_keywords[i].token, token.cstr, token.len) == 0) {
+        const char* keyword = fin_lex_keywords[i].cstr;
+        if (keyword[token.len] == '\0' && strncmp(keyword, token.cstr, token.len) == 0) {
             token.type = fin_lex_keywords[i].type;
             return token;
         }
