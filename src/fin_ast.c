@@ -706,6 +706,11 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
             fin_ast_expr_destroy(mod, &invoke_expr->args->base);
             break;
         }
+        case fin_ast_expr_type_init: {
+            fin_ast_init_expr* init_expr = (fin_ast_init_expr*)expr;
+            fin_ast_expr_destroy(mod, &init_expr->args->base);
+            break;
+        }
         case fin_ast_expr_type_assign: {
             fin_ast_assign_expr* assign_expr = (fin_ast_assign_expr*)expr;
             fin_ast_expr_destroy(mod, assign_expr->lhs);

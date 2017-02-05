@@ -267,6 +267,8 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
         case fin_ast_expr_type_assign: {
             return fin_str_create(ctx, "void", -1);
         }
+        case fin_ast_expr_type_init:
+            assert(0);
     }
 }
 
@@ -437,7 +439,6 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_mod_compile_expr(ctx, cmp, assign_expr->rhs, NULL);
             if (id_expr->primary) {
                 fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
-                fin_mod_type* type = NULL;
                 int32_t field_idx = fin_mod_resolve_field(ctx, cmp->mod, type_name, id_expr->name);
                 if (field_idx >= 0) {
                     fin_mod_emit_uint8(cmp, fin_op_store_field);
