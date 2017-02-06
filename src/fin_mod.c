@@ -31,35 +31,66 @@ typedef struct fin_mod_type {
     fin_mod_pair* fields;
 } fin_mod_type;
 
+typedef struct fin_mod_code {
+    uint8_t*      top;
+    uint8_t*      begin;
+    uint8_t*      end;
+    uint8_t       storage[4];
+} fin_mod_code;
+
 typedef struct fin_mod_compiler {
     fin_mod*      mod;
     fin_ast_func* func;
-    uint8_t*      code;
-    uint8_t*      code_begin;
-    uint8_t*      code_end;
-    uint8_t       code_storage[1024];
+    fin_mod_code  code;
     fin_mod_pair  locals[256];
     int32_t       locals_count;
     fin_mod_pair  params[32];
     int32_t       params_count;
 } fin_mod_compiler;
 
+static void fin_mod_code_init(fin_mod_code* code) {
+    code->top   = code->storage;
+    code->begin = code->storage;
+    code->end   = code->storage + sizeof(code->storage);
+}
+
+static void fin_mod_code_reset(fin_ctx* ctx, fin_mod_code* code) {
+    if (code->begin != code->storage)
+        ctx->alloc(code->begin, 0);
+    fin_mod_code_init(code);
+}
+
+static void fin_mod_code_ensure(fin_ctx* ctx, fin_mod_code* code, int32_t size) {
+    if (code->top + size >= code->end) {
+        int32_t length;
+        uint8_t* buffer;
+        if (code->begin == code->storage) {
+            length = sizeof(code->storage) * 2;
+            buffer = ctx->alloc(NULL, length);
+            memcpy(buffer, code->begin, code->top - code->begin);
+        }
+        else {
+            length = (code->end - code->begin) * 2;
+            buffer = ctx->alloc(code->begin, length);
+        }
+        code->top   = buffer + (code->top - code->begin);
+        code->begin = buffer;
+        code->end   = buffer + length;
+    }
+}
+
+static void fin_mod_code_emit_uint8(fin_ctx* ctx, fin_mod_code* code, uint8_t val) {
+    fin_mod_code_ensure(ctx, code, 1);
+    *code->top++ = val;
+}
+
+static void fin_mod_code_emit_uint16(fin_ctx* ctx, fin_mod_code* code, uint16_t val) {
+    fin_mod_code_ensure(ctx, code, 2);
+    *code->top++ = val & 0xFF;
+    *code->top++ = (val >> 8) & 0xFF;
+}
+
 static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr);
-
-static void fin_mod_ensure(fin_mod_compiler* cmp, int32_t size) {
-    assert(size > cmp->code - cmp->code_end);
-}
-
-static void fin_mod_emit_uint8(fin_mod_compiler* cmp, uint8_t val) {
-    fin_mod_ensure(cmp, 1);
-    *cmp->code++ = val;
-}
-
-static void fin_mod_emit_uint16(fin_mod_compiler* cmp, uint16_t val) {
-    fin_mod_ensure(cmp, 2);
-    *cmp->code++ = val & 0xFF;
-    *cmp->code++ = (val >> 8) & 0xFF;
-}
 
 static int16_t fin_mod_const_idx(fin_mod_compiler* cmp, fin_val val) {
     fin_mod* mod = cmp->mod;
@@ -277,15 +308,15 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
             int32_t local_idx = fin_mod_resolve_local(cmp, id_expr->name);
             if (local_idx >= 0) {
-                fin_mod_emit_uint8(cmp, fin_op_load_local);
-                fin_mod_emit_uint8(cmp, local_idx);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_local);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, local_idx);
                 FIN_LOG("\tload_loc   %2d         // %s\n", local_idx, fin_str_cstr(id_expr->name));
                 break;
             }
             int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
             if (param_idx >= 0) {
-                fin_mod_emit_uint8(cmp, fin_op_load_arg);
-                fin_mod_emit_uint8(cmp, param_idx);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_arg);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, param_idx);
                 FIN_LOG("\tload_arg   %2d         // %s\n", param_idx, fin_str_cstr(id_expr->name));
                 break;
             }
@@ -296,8 +327,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_ast_bool_expr* bool_expr = (fin_ast_bool_expr*)expr;
             fin_val val = { .b = bool_expr->value };
             int16_t idx = fin_mod_const_idx(cmp, val);
-            fin_mod_emit_uint8(cmp, fin_op_load_const);
-            fin_mod_emit_uint16(cmp, idx);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_const);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tload_const %2d         // %s\n", idx, bool_expr->value ? "true" : "false");
             break;
         }
@@ -305,8 +336,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_ast_int_expr* int_expr = (fin_ast_int_expr*)expr;
             fin_val val = { .i = int_expr->value };
             int16_t idx = fin_mod_const_idx(cmp, val);
-            fin_mod_emit_uint8(cmp, fin_op_load_const);
-            fin_mod_emit_uint16(cmp, idx);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_const);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tload_const %2d         // %d\n", idx, (int32_t)int_expr->value);
             break;
         }
@@ -314,8 +345,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_ast_float_expr* float_expr = (fin_ast_float_expr*)expr;
             fin_val val = { .f = float_expr->value };
             int16_t idx = fin_mod_const_idx(cmp, val);
-            fin_mod_emit_uint8(cmp, fin_op_load_const);
-            fin_mod_emit_uint16(cmp, idx);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_const);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tload_const %2d         // %f\n", idx, float_expr->value);
             break;
         }
@@ -323,8 +354,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_ast_str_expr* str_expr = (fin_ast_str_expr*)expr;
             fin_val val = { .s = str_expr->value };
             int16_t idx = fin_mod_const_idx(cmp, val);
-            fin_mod_emit_uint8(cmp, fin_op_load_const);
-            fin_mod_emit_uint16(cmp, idx);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_const);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tload_const %2d         // \"%s\"\n", idx, fin_str_cstr(str_expr->value));
             break;
         }
@@ -340,16 +371,16 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 strcat(signature, ")");
                 fin_str* sign = fin_str_create(ctx, signature, -1);
                 int16_t idx = fin_mod_bind_idx(cmp, sign);
-                fin_mod_emit_uint8(cmp, fin_op_call);
-                fin_mod_emit_uint16(cmp, idx);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
+                fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
                 FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
             }
             if (interp_expr->next) {
                 fin_mod_compile_expr(ctx, cmp, &interp_expr->next->base);
                 fin_str* sign = fin_str_create(ctx, "__op_add(string,string)", -1);
                 int16_t idx = fin_mod_bind_idx(cmp, sign);
-                fin_mod_emit_uint8(cmp, fin_op_call);
-                fin_mod_emit_uint16(cmp, idx);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
+                fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
                 FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
             }
             break;
@@ -360,8 +391,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
 
             fin_str* sign = fin_mod_unary_get_signature(ctx, cmp, unary_expr);
             int16_t idx = fin_mod_bind_idx(cmp, sign);
-            fin_mod_emit_uint8(cmp, fin_op_call);
-            fin_mod_emit_uint16(cmp, idx);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
 
             break;
@@ -373,37 +404,37 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
 
             fin_str* sign = fin_mod_binary_get_signature(ctx, cmp, bin_expr);
             int16_t idx = fin_mod_bind_idx(cmp, sign);
-            fin_mod_emit_uint8(cmp, fin_op_call);
-            fin_mod_emit_uint16(cmp, idx);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
             break;
         }
         case fin_ast_expr_type_cond: {
             fin_ast_cond_expr* cond_expr = (fin_ast_cond_expr*)expr;
             fin_mod_compile_expr(ctx, cmp, cond_expr->cond);
-            fin_mod_emit_uint8(cmp, fin_op_branch_if_n);
-            uint8_t* lbl_else = cmp->code;
-            fin_mod_emit_uint16(cmp, 0);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch_if_n);
+            uint8_t* lbl_else = cmp->code.top;
+            fin_mod_code_emit_uint16(ctx, &cmp->code, 0);
             FIN_LOG("\tbr_if_n     lbl_%d\n", (int32_t)(lbl_else - cmp->code_begin));
             fin_mod_compile_expr(ctx, cmp, cond_expr->true_expr);
             if (cond_expr->false_expr) {
-                fin_mod_emit_uint8(cmp, fin_op_branch);
-                uint8_t* lbl_end = cmp->code;
-                fin_mod_emit_uint16(cmp, 0);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch);
+                uint8_t* lbl_end = cmp->code.top;
+                fin_mod_code_emit_uint16(ctx, &cmp->code, 0);
                 FIN_LOG("\tbr          lbl_%d\n", (int32_t)(lbl_end - cmp->code_begin));
                 FIN_LOG("lbl_%d:\n", (int32_t)(lbl_else - cmp->code_begin));
-                uint16_t offset = cmp->code - lbl_else - 2;
+                uint16_t offset = cmp->code.top - lbl_else - 2;
                 *lbl_else++ = offset & 0xFF;
                 *lbl_else++ = (offset >> 8) & 0xFF;
                 fin_mod_compile_expr(ctx, cmp, cond_expr->false_expr);
                 FIN_LOG("lbl_%d:\n", (int32_t)(lbl_end - cmp->code_begin));
-                offset = cmp->code - lbl_end - 2;
+                offset = cmp->code.top - lbl_end - 2;
                 *lbl_end++ = offset & 0xFF;
                 *lbl_end++ = (offset >> 8) & 0xFF;
             }
             else {
                 FIN_LOG("lbl_%d:\n", (int32_t)(lbl_else - cmp->code_begin));
-                uint16_t offset = cmp->code - lbl_else - 2;
+                uint16_t offset = cmp->code.top - lbl_else - 2;
                 *lbl_else++ = offset & 0xFF;
                 *lbl_else++ = (offset >> 8) & 0xFF;
             }
@@ -420,8 +451,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 fin_mod_compile_expr(ctx, cmp, &e->base);
             fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr);
             int16_t idx = fin_mod_bind_idx(cmp, sign);
-            fin_mod_emit_uint8(cmp, fin_op_call);
-            fin_mod_emit_uint16(cmp, idx);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
             break;
         }
@@ -437,8 +468,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
                 int32_t field_idx = fin_mod_resolve_field(ctx, cmp->mod, type_name, id_expr->name);
                 if (field_idx >= 0) {
-                    fin_mod_emit_uint8(cmp, fin_op_store_field);
-                    fin_mod_emit_uint8(cmp, field_idx);
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_field);
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, field_idx);
                     FIN_LOG("\tstore_fld  %2d         // %s\n", field_idx, fin_str_cstr(id_expr->name));
                     break;
                 }
@@ -446,15 +477,15 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             else {
                 int32_t local_idx = fin_mod_resolve_local(cmp, id_expr->name);
                 if (local_idx >= 0) {
-                    fin_mod_emit_uint8(cmp, fin_op_store_local);
-                    fin_mod_emit_uint8(cmp, local_idx);
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_local);
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, local_idx);
                     FIN_LOG("\tstore_loc  %2d         // %s\n", local_idx, fin_str_cstr(id_expr->name));
                     break;
                 }
                 int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
                 if (param_idx >= 0) {
-                    fin_mod_emit_uint8(cmp, fin_op_store_arg);
-                    fin_mod_emit_uint8(cmp, param_idx);
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_arg);
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, param_idx);
                     FIN_LOG("\tstore_arg  %2d         // %s\n", param_idx, fin_str_cstr(id_expr->name));
                     break;
                 }
@@ -473,16 +504,16 @@ static void fin_mod_compile_init_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_a
     for (fin_ast_arg_expr* e = expr->args; e; e = e->next)
         args_count++;
     assert(args_count == type->fields_count);
-    fin_mod_emit_uint8(cmp, fin_op_new);
-    fin_mod_emit_uint8(cmp, type->fields_count);
+    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_new);
+    fin_mod_code_emit_uint8(ctx, &cmp->code, type->fields_count);
     FIN_LOG("\tnew        %2d         // %s\n", type->fields_count, fin_str_cstr(type->name));
     int32_t idx = 0;
     for (fin_ast_arg_expr* e = expr->args; e; e = e->next) {
         fin_str* arg_type = fin_mod_resolve_type(ctx, cmp, e->expr);
         assert(arg_type == type->fields[idx].type);
         fin_mod_compile_expr(ctx, cmp, e->expr);
-        fin_mod_emit_uint8(cmp, fin_op_set_field);
-        fin_mod_emit_uint8(cmp, idx);
+        fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_set_field);
+        fin_mod_code_emit_uint8(ctx, &cmp->code, idx);
         FIN_LOG("\tset_fld    %2d         // %s\n", idx, fin_str_cstr(type->fields[idx].name));
         idx++;
     }
@@ -499,36 +530,36 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
             fin_ast_ret_stmt* ret_stmt = (fin_ast_ret_stmt*)stmt;
             if (ret_stmt->expr)
                 fin_mod_compile_expr(ctx, cmp, ret_stmt->expr);
-            fin_mod_emit_uint8(cmp, fin_op_return);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_return);
             FIN_LOG("\tret\n");
             break;
         }
         case fin_ast_stmt_type_if: {
             fin_ast_if_stmt* if_stmt = (fin_ast_if_stmt*)stmt;
             fin_mod_compile_expr(ctx, cmp, if_stmt->cond);
-            fin_mod_emit_uint8(cmp, fin_op_branch_if_n);
-            uint8_t* lbl_else = cmp->code;
-            fin_mod_emit_uint16(cmp, 0);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch_if_n);
+            uint8_t* lbl_else = cmp->code.top;
+            fin_mod_code_emit_uint16(ctx, &cmp->code, 0);
             FIN_LOG("\tbr_if_n     lbl_%d\n", (int32_t)(lbl_else - cmp->code_begin));
             fin_mod_compile_stmt(ctx, cmp, if_stmt->true_stmt);
             if (if_stmt->false_stmt) {
-                fin_mod_emit_uint8(cmp, fin_op_branch);
-                uint8_t* lbl_end = cmp->code;
-                fin_mod_emit_uint16(cmp, 0);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch);
+                uint8_t* lbl_end = cmp->code.top;
+                fin_mod_code_emit_uint16(ctx, &cmp->code, 0);
                 FIN_LOG("\tbr          lbl_%d\n", (int32_t)(lbl_end - cmp->code_begin));
                 FIN_LOG("lbl_%d:\n", (int32_t)(lbl_else - cmp->code_begin));
-                uint16_t offset = cmp->code - lbl_else - 2;
+                uint16_t offset = cmp->code.top - lbl_else - 2;
                 *lbl_else++ = offset & 0xFF;
                 *lbl_else++ = (offset >> 8) & 0xFF;
                 fin_mod_compile_stmt(ctx, cmp, if_stmt->false_stmt);
                 FIN_LOG("lbl_%d:\n", (int32_t)(lbl_end - cmp->code_begin));
-                offset = cmp->code - lbl_end - 2;
+                offset = cmp->code.top - lbl_end - 2;
                 *lbl_end++ = offset & 0xFF;
                 *lbl_end++ = (offset >> 8) & 0xFF;
             }
             else {
                 FIN_LOG("lbl_%d:\n", (int32_t)(lbl_else - cmp->code_begin));
-                uint16_t offset = cmp->code - lbl_else - 2;
+                uint16_t offset = cmp->code.top - lbl_else - 2;
                 *lbl_else++ = offset & 0xFF;
                 *lbl_else++ = (offset >> 8) & 0xFF;
             }
@@ -536,20 +567,20 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
         }
         case fin_ast_stmt_type_while: {
             fin_ast_while_stmt* while_stmt = (fin_ast_while_stmt*)stmt;
-            uint8_t* lbl_loop = cmp->code;
+            uint8_t* lbl_loop = cmp->code.top;
             FIN_LOG("lbl_%d:\n", (int32_t)(lbl_loop - cmp->code_begin));
             fin_mod_compile_expr(ctx, cmp, while_stmt->cond);
-            fin_mod_emit_uint8(cmp, fin_op_branch_if_n);
-            uint8_t* lbl_end = cmp->code;
-            fin_mod_emit_uint16(cmp, 0);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch_if_n);
+            uint8_t* lbl_end = cmp->code.top;
+            fin_mod_code_emit_uint16(ctx, &cmp->code, 0);
             FIN_LOG("\tbr_if_n     lbl_%d\n", (int32_t)(lbl_end - cmp->code_begin));
             fin_mod_compile_stmt(ctx, cmp, while_stmt->stmt);
-            uint16_t offset = lbl_loop - cmp->code - 3;
-            fin_mod_emit_uint8(cmp, fin_op_branch);
-            fin_mod_emit_uint16(cmp, offset);
+            uint16_t offset = lbl_loop - cmp->code.top - 3;
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, offset);
             FIN_LOG("\tbr          lbl_%d\n", (int32_t)(lbl_loop - cmp->code_begin));
             FIN_LOG("lbl_%d:\n", (int32_t)(lbl_end - cmp->code_begin));
-            offset = cmp->code - lbl_end - 2;
+            offset = cmp->code.top - lbl_end - 2;
             *lbl_end++ = offset & 0xFF;
             *lbl_end++ = (offset >> 8) & 0xFF;
             break;
@@ -565,8 +596,8 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
                     fin_mod_compile_init_expr(ctx, cmp, (fin_ast_init_expr*)decl_stmt->init, decl_stmt->type->name);
                 else
                     fin_mod_compile_expr(ctx, cmp, decl_stmt->init);
-                fin_mod_emit_uint8(cmp, fin_op_store_local);
-                fin_mod_emit_uint8(cmp, local_idx);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_local);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, local_idx);
                 FIN_LOG("\tstore_loc  %2d\n", local_idx);
             }
             break;
@@ -587,11 +618,9 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     fin_mod_compiler cmp;
     cmp.mod = mod;
     cmp.func = func;
-    cmp.code = cmp.code_storage;
-    cmp.code_begin = cmp.code_storage;
-    cmp.code_end = cmp.code_storage + sizeof(cmp.code_storage);
     cmp.locals_count = 0;
     cmp.params_count = 0;
+    fin_mod_code_init(&cmp.code);
 
     for (fin_ast_param* param = func->params; param; param = param->next) {
         fin_mod_pair* p = &cmp.params[cmp.params_count++];
@@ -600,15 +629,17 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     }
 
     fin_mod_compile_stmt(ctx, &cmp, &func->block->base);
-    if (cmp.code == cmp.code_begin || cmp.code[-1] != fin_op_return) {
-        fin_mod_emit_uint8(&cmp, fin_op_return);
+    if (cmp.code.top == cmp.code.begin || cmp.code.top[-1] != fin_op_return) {
+        fin_mod_code_emit_uint8(ctx, &cmp.code, fin_op_return);
         FIN_LOG("\tret\n");
     }
 
-    out_func->code_length = (int32_t)(cmp.code - cmp.code_begin);
+    out_func->code_length = (int32_t)(cmp.code.top - cmp.code.begin);
     out_func->code = (uint8_t*)ctx->alloc(NULL, out_func->code_length);
-    memcpy(out_func->code, cmp.code_begin, out_func->code_length);
+    memcpy(out_func->code, cmp.code.begin, out_func->code_length);
     out_func->locals = cmp.locals_count;
+
+    fin_mod_code_reset(ctx, &cmp.code);
 
     FIN_LOG("\n");
 }
