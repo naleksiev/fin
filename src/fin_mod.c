@@ -272,7 +272,7 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
     }
 }
 
-static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr, fin_ast_expr* primary) {
+static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr) {
     switch (expr->type) {
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
@@ -331,7 +331,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         }
         case fin_ast_expr_type_str_interp: {
             fin_ast_str_interp_expr* interp_expr = (fin_ast_str_interp_expr*)expr;
-            fin_mod_compile_expr(ctx, cmp, interp_expr->expr, NULL);
+            fin_mod_compile_expr(ctx, cmp, interp_expr->expr);
             fin_str* type = fin_mod_resolve_type(ctx, cmp, interp_expr->expr);
             if (strcmp(fin_str_cstr(type), "string") != 0) {
                 char signature[256];
@@ -346,7 +346,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
             }
             if (interp_expr->next) {
-                fin_mod_compile_expr(ctx, cmp, &interp_expr->next->base, NULL);
+                fin_mod_compile_expr(ctx, cmp, &interp_expr->next->base);
                 fin_str* sign = fin_str_create(ctx, "__op_add(string,string)", -1);
                 int16_t idx = fin_mod_bind_idx(cmp, sign);
                 fin_mod_emit_uint8(cmp, fin_op_call);
@@ -357,7 +357,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         }
         case fin_ast_expr_type_unary: {
             fin_ast_unary_expr* unary_expr = (fin_ast_unary_expr*)expr;
-            fin_mod_compile_expr(ctx, cmp, unary_expr->expr, NULL);
+            fin_mod_compile_expr(ctx, cmp, unary_expr->expr);
 
             fin_str* sign = fin_mod_unary_get_signature(ctx, cmp, unary_expr);
             int16_t idx = fin_mod_bind_idx(cmp, sign);
@@ -369,8 +369,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         }
         case fin_ast_expr_type_binary: {
             fin_ast_binary_expr* bin_expr = (fin_ast_binary_expr*)expr;
-            fin_mod_compile_expr(ctx, cmp, bin_expr->lhs, NULL);
-            fin_mod_compile_expr(ctx, cmp, bin_expr->rhs, NULL);
+            fin_mod_compile_expr(ctx, cmp, bin_expr->lhs);
+            fin_mod_compile_expr(ctx, cmp, bin_expr->rhs);
 
             fin_str* sign = fin_mod_binary_get_signature(ctx, cmp, bin_expr);
             int16_t idx = fin_mod_bind_idx(cmp, sign);
@@ -381,12 +381,12 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         }
         case fin_ast_expr_type_cond: {
             fin_ast_cond_expr* cond_expr = (fin_ast_cond_expr*)expr;
-            fin_mod_compile_expr(ctx, cmp, cond_expr->cond, NULL);
+            fin_mod_compile_expr(ctx, cmp, cond_expr->cond);
             fin_mod_emit_uint8(cmp, fin_op_branch_if_n);
             uint8_t* lbl_else = cmp->code;
             fin_mod_emit_uint16(cmp, 0);
             FIN_LOG("\tbr_if_n     lbl_%d\n", (int32_t)(lbl_else - cmp->code_begin));
-            fin_mod_compile_expr(ctx, cmp, cond_expr->true_expr, NULL);
+            fin_mod_compile_expr(ctx, cmp, cond_expr->true_expr);
             if (cond_expr->false_expr) {
                 fin_mod_emit_uint8(cmp, fin_op_branch);
                 uint8_t* lbl_end = cmp->code;
@@ -396,7 +396,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 uint16_t offset = cmp->code - lbl_else - 2;
                 *lbl_else++ = offset & 0xFF;
                 *lbl_else++ = (offset >> 8) & 0xFF;
-                fin_mod_compile_expr(ctx, cmp, cond_expr->false_expr, NULL);
+                fin_mod_compile_expr(ctx, cmp, cond_expr->false_expr);
                 FIN_LOG("lbl_%d:\n", (int32_t)(lbl_end - cmp->code_begin));
                 offset = cmp->code - lbl_end - 2;
                 *lbl_end++ = offset & 0xFF;
@@ -412,16 +412,13 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         }
         case fin_ast_expr_type_arg: {
             fin_ast_arg_expr* arg_expr = (fin_ast_arg_expr*)expr;
-            fin_mod_compile_expr(ctx, cmp, arg_expr->expr, NULL);
+            fin_mod_compile_expr(ctx, cmp, arg_expr->expr);
             break;
         }
         case fin_ast_expr_type_invoke: {
             fin_ast_invoke_expr* invoke_expr = (fin_ast_invoke_expr*)expr;
-
-            //fin_mod_compile_expr(ctx, &invoke_expr->id->base);
             for (fin_ast_arg_expr* e = invoke_expr->args; e; e = e->next)
-                fin_mod_compile_expr(ctx, cmp, &e->base, NULL);
-
+                fin_mod_compile_expr(ctx, cmp, &e->base);
             fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr);
             int16_t idx = fin_mod_bind_idx(cmp, sign);
             fin_mod_emit_uint8(cmp, fin_op_call);
@@ -435,8 +432,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             assert(assign_expr->lhs->type == fin_ast_expr_type_id);
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)assign_expr->lhs;
             if (id_expr->primary)
-                fin_mod_compile_expr(ctx, cmp, id_expr->primary, NULL);
-            fin_mod_compile_expr(ctx, cmp, assign_expr->rhs, NULL);
+                fin_mod_compile_expr(ctx, cmp, id_expr->primary);
+            fin_mod_compile_expr(ctx, cmp, assign_expr->rhs);
             if (id_expr->primary) {
                 fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
                 int32_t field_idx = fin_mod_resolve_field(ctx, cmp->mod, type_name, id_expr->name);
@@ -478,20 +475,20 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
     switch (stmt->type) {
         case fin_ast_stmt_type_expr: {
             fin_ast_expr_stmt* expr_stmt = (fin_ast_expr_stmt*)stmt;
-            fin_mod_compile_expr(ctx, cmp, expr_stmt->expr, NULL);
+            fin_mod_compile_expr(ctx, cmp, expr_stmt->expr);
             break;
         }
         case fin_ast_stmt_type_ret: {
             fin_ast_ret_stmt* ret_stmt = (fin_ast_ret_stmt*)stmt;
             if (ret_stmt->expr)
-                fin_mod_compile_expr(ctx, cmp, ret_stmt->expr, NULL);
+                fin_mod_compile_expr(ctx, cmp, ret_stmt->expr);
             fin_mod_emit_uint8(cmp, fin_op_return);
             FIN_LOG("\tret\n");
             break;
         }
         case fin_ast_stmt_type_if: {
             fin_ast_if_stmt* if_stmt = (fin_ast_if_stmt*)stmt;
-            fin_mod_compile_expr(ctx, cmp, if_stmt->cond, NULL);
+            fin_mod_compile_expr(ctx, cmp, if_stmt->cond);
             fin_mod_emit_uint8(cmp, fin_op_branch_if_n);
             uint8_t* lbl_else = cmp->code;
             fin_mod_emit_uint16(cmp, 0);
@@ -524,7 +521,7 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
             fin_ast_while_stmt* while_stmt = (fin_ast_while_stmt*)stmt;
             uint8_t* lbl_loop = cmp->code;
             FIN_LOG("lbl_%d:\n", (int32_t)(lbl_loop - cmp->code_begin));
-            fin_mod_compile_expr(ctx, cmp, while_stmt->cond, NULL);
+            fin_mod_compile_expr(ctx, cmp, while_stmt->cond);
             fin_mod_emit_uint8(cmp, fin_op_branch_if_n);
             uint8_t* lbl_end = cmp->code;
             fin_mod_emit_uint16(cmp, 0);
@@ -550,7 +547,7 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
                 if (decl_stmt->init->type == fin_ast_expr_type_init)
                     fin_mod_compile_init_expr(ctx, cmp, (fin_ast_init_expr*)decl_stmt->init, decl_stmt->type->name);
                 else
-                    fin_mod_compile_expr(ctx, cmp, decl_stmt->init, NULL);
+                    fin_mod_compile_expr(ctx, cmp, decl_stmt->init);
                 fin_mod_emit_uint8(cmp, fin_op_store_local);
                 fin_mod_emit_uint8(cmp, local_idx);
                 FIN_LOG("\tstore_loc  %2d\n", local_idx);
