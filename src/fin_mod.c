@@ -9,6 +9,7 @@
 #include "fin_op.h"
 #include "fin_lex.h"
 #include "fin_str.h"
+#include "fin_obj.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -113,10 +114,10 @@ static fin_mod_func* fin_mod_find_func(fin_ctx* ctx, fin_mod* mod, fin_str* sign
     return NULL;
 }
 
-static int32_t fin_mod_resolve_field(fin_ctx* ctx, fin_mod* mod, fin_str* type, fin_str* field) {
-    fin_mod_type* mod_type = fin_mod_find_type(ctx, mod, type);
-    for (int32_t i=0; i<mod_type->fields_count; i++) {
-        if (mod_type->fields[i].name == field)
+static int32_t fin_mod_resolve_field(fin_ctx* ctx, fin_mod* mod, fin_str* type_name, fin_str* field_name) {
+    fin_mod_type* type = fin_mod_find_type(ctx, mod, type_name);
+    for (int32_t i=0; i<type->fields_count; i++) {
+        if (type->fields[i].name == field_name)
             return i;
     }
     return -1;
@@ -465,8 +466,26 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
     }
 }
 
-static void fin_mod_compile_init_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_init_expr* expr, fin_str* type) {
-
+static void fin_mod_compile_init_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_init_expr* expr, fin_str* type_name) {
+    fin_mod_type* type = fin_mod_find_type(ctx, cmp->mod, type_name);
+    assert(type);
+    int32_t args_count = 0;
+    for (fin_ast_arg_expr* e = expr->args; e; e = e->next)
+        args_count++;
+    assert(args_count == type->fields_count);
+    fin_mod_emit_uint8(cmp, fin_op_new);
+    fin_mod_emit_uint8(cmp, type->fields_count);
+    FIN_LOG("\tnew        %2d         // %s\n", type->fields_count, fin_str_cstr(type->name));
+    int32_t idx = 0;
+    for (fin_ast_arg_expr* e = expr->args; e; e = e->next) {
+        fin_str* arg_type = fin_mod_resolve_type(ctx, cmp, e->expr);
+        assert(arg_type == type->fields[idx].type);
+        fin_mod_compile_expr(ctx, cmp, e->expr);
+        fin_mod_emit_uint8(cmp, fin_op_set_field);
+        fin_mod_emit_uint8(cmp, idx);
+        FIN_LOG("\tset_fld    %2d         // %s\n", idx, fin_str_cstr(type->fields[idx].name));
+        idx++;
+    }
 }
 
 static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_stmt* stmt) {
