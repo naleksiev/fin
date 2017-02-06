@@ -25,10 +25,15 @@ typedef struct fin_mod_pair {
     fin_str* type;
 } fin_mod_pair;
 
+typedef struct fin_mod_field {
+    fin_str* name;
+    fin_str* type;
+} fin_mod_field;
+
 typedef struct fin_mod_type {
-    fin_str*      name;
-    int32_t       fields_count;
-    fin_mod_pair* fields;
+    fin_str*       name;
+    fin_mod_field* fields;
+    int32_t        fields_count;
 } fin_mod_type;
 
 typedef struct fin_mod_code {
@@ -653,15 +658,15 @@ static void fin_mod_compile_type(fin_ctx* ctx, fin_ast_type* type, fin_mod_type*
     }
     dest_type->name = fin_str_clone(type->name);
     dest_type->fields_count = fields;
-    dest_type->fields = (fin_mod_pair*)ctx->alloc(NULL, sizeof(fin_mod_pair) * fields);
+    dest_type->fields = (fin_mod_field*)ctx->alloc(NULL, sizeof(fin_mod_field) * fields);
 
     field = type->fields;
-    fin_mod_pair* field_pair = dest_type->fields;
+    fin_mod_field* f = dest_type->fields;
     while (field) {
-        field_pair->name = field->name;
-        field_pair->type = field->type->name;
+        f->name = field->name;
+        f->type = field->type->name;
         field = field->next;
-        field_pair++;
+        f++;
     }
 }
 
