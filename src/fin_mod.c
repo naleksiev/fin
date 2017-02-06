@@ -81,6 +81,22 @@ static int16_t fin_mod_bind_idx(fin_mod_compiler* cmp, fin_str* sign) {
     return mod->binds_count++;
 }
 
+static fin_mod_type* fin_mod_find_type(fin_ctx* ctx, fin_mod* mod, fin_str* name) {
+    for (int32_t i=0; i<mod->types_count; i++) {
+        if (mod->types[i].name == name)
+            return &mod->types[i];
+    }
+    fin_mod* m = ctx->mod;
+    while (m) {
+        for (int32_t i=0; i<m->types_count; i++) {
+            if (m->types[i].name == name)
+                return &m->types[i];
+        }
+        m = m->next;
+    }
+    return NULL;
+}
+
 static fin_mod_func* fin_mod_find_func(fin_ctx* ctx, fin_mod* mod, fin_str* sign) {
     for (int32_t i=0; i<mod->funcs_count; i++) {
         if (mod->funcs[i].sign == sign)
@@ -98,25 +114,7 @@ static fin_mod_func* fin_mod_find_func(fin_ctx* ctx, fin_mod* mod, fin_str* sign
 }
 
 static int32_t fin_mod_resolve_field(fin_ctx* ctx, fin_mod* mod, fin_str* type, fin_str* field) {
-    fin_mod_type* mod_type  = NULL;
-    for (int32_t i=0; i<mod->types_count; i++) {
-        if (mod->types[i].name == type) {
-            mod_type = &mod->types[i];
-            break;
-        }
-    }
-    if (mod_type) {
-        fin_mod* m = ctx->mod;
-        while (m) {
-            for (int32_t i=0; i<m->types_count; i++) {
-                if (m->types[i].name == type) {
-                    mod_type = &mod->types[i];
-                    break;
-                }
-            }
-            m = m->next;
-        }
-    }
+    fin_mod_type* mod_type = fin_mod_find_type(ctx, mod, type);
     for (int32_t i=0; i<mod_type->fields_count; i++) {
         if (mod_type->fields[i].name == field)
             return i;
