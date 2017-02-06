@@ -20,10 +20,19 @@
 #   define FIN_LOG(...)
 #endif
 
-typedef struct fin_mod_pair {
+typedef struct fin_mod_local {
     fin_str* name;
     fin_str* type;
-} fin_mod_pair;
+    uint8_t  idx;
+    bool     is_param;
+} fin_mod_local;
+
+typedef struct fin_mod_code {
+    uint8_t*      top;
+    uint8_t*      begin;
+    uint8_t*      end;
+    uint8_t       storage[256];
+} fin_mod_code;
 
 typedef struct fin_mod_field {
     fin_str* name;
@@ -36,21 +45,13 @@ typedef struct fin_mod_type {
     int32_t        fields_count;
 } fin_mod_type;
 
-typedef struct fin_mod_code {
-    uint8_t*      top;
-    uint8_t*      begin;
-    uint8_t*      end;
-    uint8_t       storage[1024];
-} fin_mod_code;
-
 typedef struct fin_mod_compiler {
     fin_mod*      mod;
     fin_ast_func* func;
     fin_mod_code  code;
-    fin_mod_pair  locals[256];
-    int32_t       locals_count;
-    fin_mod_pair  params[32];
-    int32_t       params_count;
+    fin_mod_local locals[256];
+    uint8_t       locals_count;
+    uint8_t       params_count;
 } fin_mod_compiler;
 
 static void fin_mod_code_init(fin_mod_code* code) {
@@ -159,18 +160,11 @@ static int32_t fin_mod_resolve_field(fin_ctx* ctx, fin_mod* mod, fin_str* type_n
     return -1;
 }
 
-static int32_t fin_mod_resolve_local(fin_mod_compiler* cmp, fin_str* id) {
+static fin_mod_local* fin_mod_resolve_local(fin_mod_compiler* cmp, fin_str* id) {
     for (int32_t i=0; i<cmp->locals_count; i++)
         if (cmp->locals[i].name == id)
-            return i;
-    return -1;
-}
-
-static int32_t fin_mod_resolve_arg(fin_mod_compiler* cmp, fin_str* id) {
-    for (int32_t i=0; i<cmp->params_count; i++)
-        if (cmp->params[i].name == id)
-            return i;
-    return -1;
+            return &cmp->locals[i];
+    return NULL;
 }
 
 static fin_str* fin_mod_invoke_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_invoke_expr* expr) {
@@ -247,13 +241,9 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
     switch (expr->type) {
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
-            int32_t local_idx = fin_mod_resolve_local(cmp, id_expr->name);
-            if (local_idx >= 0)
-                return cmp->locals[local_idx].type;
-            int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
-            if (param_idx >= 0)
-                return cmp->params[param_idx].type;
-            assert(0);
+            fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
+            assert(local);
+            return local->type;
         }
         case fin_ast_expr_type_bool: {
             return fin_str_create(ctx, "bool", -1);
@@ -311,21 +301,12 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
     switch (expr->type) {
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
-            int32_t local_idx = fin_mod_resolve_local(cmp, id_expr->name);
-            if (local_idx >= 0) {
-                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_local);
-                fin_mod_code_emit_uint8(ctx, &cmp->code, local_idx);
-                FIN_LOG("\tload_loc   %2d         // %s\n", local_idx, fin_str_cstr(id_expr->name));
-                break;
-            }
-            int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
-            if (param_idx >= 0) {
-                fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_arg);
-                fin_mod_code_emit_uint8(ctx, &cmp->code, param_idx);
-                FIN_LOG("\tload_arg   %2d         // %s\n", param_idx, fin_str_cstr(id_expr->name));
-                break;
-            }
-            assert(0);
+            fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
+            assert(local);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, local->is_param ? fin_op_load_arg : fin_op_load_local);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, local->idx);
+            FIN_LOG("\t%s   %2d         // %s\n",
+                local->is_param ? "load_arg" : "load_loc", local->idx, fin_str_cstr(local->name));
             break;
         }
         case fin_ast_expr_type_bool: {
@@ -480,20 +461,12 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 }
             }
             else {
-                int32_t local_idx = fin_mod_resolve_local(cmp, id_expr->name);
-                if (local_idx >= 0) {
-                    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_local);
-                    fin_mod_code_emit_uint8(ctx, &cmp->code, local_idx);
-                    FIN_LOG("\tstore_loc  %2d         // %s\n", local_idx, fin_str_cstr(id_expr->name));
-                    break;
-                }
-                int32_t param_idx = fin_mod_resolve_arg(cmp, id_expr->name);
-                if (param_idx >= 0) {
-                    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_arg);
-                    fin_mod_code_emit_uint8(ctx, &cmp->code, param_idx);
-                    FIN_LOG("\tstore_arg  %2d         // %s\n", param_idx, fin_str_cstr(id_expr->name));
-                    break;
-                }
+                fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
+                assert(local);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, local->is_param ? fin_op_store_arg : fin_op_store_local);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, local->idx);
+                FIN_LOG("\t%s  %2d         // %s\n",
+                local->is_param ? "store_arg" : "store_loc", local->idx, fin_str_cstr(local->name));
             }
             break;
         }
@@ -592,18 +565,20 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
         }
         case fin_ast_stmt_type_decl: {
             fin_ast_decl_stmt* decl_stmt = (fin_ast_decl_stmt*)stmt;
-            assert(fin_mod_resolve_local(cmp, decl_stmt->name) < 0);
-            int32_t local_idx = cmp->locals_count++;
-            cmp->locals[local_idx].name = decl_stmt->name;
-            cmp->locals[local_idx].type = decl_stmt->type->name;
+            assert(!fin_mod_resolve_local(cmp, decl_stmt->name));
+            fin_mod_local* local = &cmp->locals[cmp->locals_count++];
+            local->name = decl_stmt->name;
+            local->type = decl_stmt->type->name;
+            local->idx = cmp->locals_count - cmp->params_count - 1;
+            local->is_param = false;
             if (decl_stmt->init) {
                 if (decl_stmt->init->type == fin_ast_expr_type_init)
                     fin_mod_compile_init_expr(ctx, cmp, (fin_ast_init_expr*)decl_stmt->init, decl_stmt->type->name);
                 else
                     fin_mod_compile_expr(ctx, cmp, decl_stmt->init);
                 fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_local);
-                fin_mod_code_emit_uint8(ctx, &cmp->code, local_idx);
-                FIN_LOG("\tstore_loc  %2d\n", local_idx);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, local->idx);
+                FIN_LOG("\tstore_loc  %2d\n", local->idx);
             }
             break;
         }
@@ -628,9 +603,11 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     fin_mod_code_init(&cmp.code);
 
     for (fin_ast_param* param = func->params; param; param = param->next) {
-        fin_mod_pair* p = &cmp.params[cmp.params_count++];
-        p->name = param->name;
-        p->type = param->type->name;
+        fin_mod_local* l = &cmp.locals[cmp.locals_count++];
+        l->name = param->name;
+        l->type = param->type->name;
+        l->idx = cmp.params_count++;
+        l->is_param = true;
     }
 
     fin_mod_compile_stmt(ctx, &cmp, &func->block->base);
@@ -642,7 +619,7 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     out_func->code_length = (int32_t)(cmp.code.top - cmp.code.begin);
     out_func->code = (uint8_t*)ctx->alloc(NULL, out_func->code_length);
     memcpy(out_func->code, cmp.code.begin, out_func->code_length);
-    out_func->locals = cmp.locals_count;
+    out_func->locals = cmp.locals_count - cmp.params_count;
 
     fin_mod_code_reset(ctx, &cmp.code);
 
