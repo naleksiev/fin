@@ -470,6 +470,10 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
     }
 }
 
+static void fin_mod_compile_init_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_init_expr* expr, fin_str* type) {
+
+}
+
 static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_stmt* stmt) {
     switch (stmt->type) {
         case fin_ast_stmt_type_expr: {
@@ -543,7 +547,10 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
             cmp->locals[local_idx].name = decl_stmt->name;
             cmp->locals[local_idx].type = decl_stmt->type->name;
             if (decl_stmt->init) {
-                fin_mod_compile_expr(ctx, cmp, decl_stmt->init, NULL);
+                if (decl_stmt->init->type == fin_ast_expr_type_init)
+                    fin_mod_compile_init_expr(ctx, cmp, (fin_ast_init_expr*)decl_stmt->init, decl_stmt->type->name);
+                else
+                    fin_mod_compile_expr(ctx, cmp, decl_stmt->init, NULL);
                 fin_mod_emit_uint8(cmp, fin_op_store_local);
                 fin_mod_emit_uint8(cmp, local_idx);
                 FIN_LOG("\tstore_loc  %2d\n", local_idx);
