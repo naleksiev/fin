@@ -35,7 +35,7 @@ typedef struct fin_mod_code {
     uint8_t*      top;
     uint8_t*      begin;
     uint8_t*      end;
-    uint8_t       storage[4];
+    uint8_t       storage[1024];
 } fin_mod_code;
 
 typedef struct fin_mod_compiler {
