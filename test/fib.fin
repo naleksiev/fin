@@ -3,5 +3,7 @@ int Fib(int n) {
 }
 
 void Main() {
-    io.WriteLine("{Fib(10)}");
+    float start = time.Clock();
+    io.WriteLine("{Fib(32)}");
+    io.WriteLine("time: {time.Clock() - start}ms");
 }
