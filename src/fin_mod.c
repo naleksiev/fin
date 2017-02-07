@@ -76,7 +76,7 @@ static void fin_mod_code_ensure(fin_ctx* ctx, fin_mod_code* code, int32_t size) 
             memcpy(buffer, code->begin, code->top - code->begin);
         }
         else {
-            length = (code->end - code->begin) * 2;
+            length = (int32_t)(code->end - code->begin) * 2;
             buffer = ctx->alloc(code->begin, length);
         }
         code->top   = buffer + (code->top - code->begin);
