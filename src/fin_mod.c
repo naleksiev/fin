@@ -48,6 +48,7 @@ typedef struct fin_mod_type {
 typedef struct fin_mod_compiler {
     fin_mod*      mod;
     fin_ast_func* func;
+    fin_str*      ret_type;
     fin_mod_code  code;
     fin_mod_local locals[256];
     uint8_t       locals_count;
@@ -530,8 +531,12 @@ static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_st
         }
         case fin_ast_stmt_type_ret: {
             fin_ast_ret_stmt* ret_stmt = (fin_ast_ret_stmt*)stmt;
-            if (ret_stmt->expr)
-                fin_mod_compile_expr(ctx, cmp, ret_stmt->expr);
+            if (ret_stmt->expr) {
+                if (ret_stmt->expr->type == fin_ast_expr_type_init)
+                    fin_mod_compile_init_expr(ctx, cmp, (fin_ast_init_expr*)ret_stmt->expr, cmp->ret_type);
+                else
+                    fin_mod_compile_expr(ctx, cmp, ret_stmt->expr);
+            }
             fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_return);
             FIN_LOG("\tret\n");
             break;
@@ -624,6 +629,7 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     cmp.func = func;
     cmp.locals_count = 0;
     cmp.params_count = 0;
+    cmp.ret_type = out_func->ret_type;
     fin_mod_code_init(&cmp.code);
 
     for (fin_ast_param* param = func->params; param; param = param->next) {
