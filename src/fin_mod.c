@@ -241,9 +241,20 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
     switch (expr->type) {
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
-            fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
-            assert(local);
-            return local->type;
+            if (id_expr->primary) {
+                fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
+                fin_mod_type* type = fin_mod_find_type(ctx, cmp->mod, type_name);
+                for (int32_t i=0; i<type->fields_count; i++) {
+                    if (type->fields[i].name == id_expr->name)
+                        return type->fields[i].type;
+                }
+                assert(0);
+            }
+            else {
+                fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
+                assert(local);
+                return local->type;
+            }
         }
         case fin_ast_expr_type_bool: {
             return fin_str_create(ctx, "bool", -1);
@@ -301,12 +312,25 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
     switch (expr->type) {
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
-            fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
-            assert(local);
-            fin_mod_code_emit_uint8(ctx, &cmp->code, local->is_param ? fin_op_load_arg : fin_op_load_local);
-            fin_mod_code_emit_uint8(ctx, &cmp->code, local->idx);
-            FIN_LOG("\t%s   %2d         // %s\n",
-                local->is_param ? "load_arg" : "load_loc", local->idx, fin_str_cstr(local->name));
+            if (id_expr->primary) {
+                fin_mod_compile_expr(ctx, cmp, id_expr->primary);
+                fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
+                int32_t field_idx = fin_mod_resolve_field(ctx, cmp->mod, type_name, id_expr->name);
+                if (field_idx >= 0) {
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_field);
+                    fin_mod_code_emit_uint8(ctx, &cmp->code, field_idx);
+                    FIN_LOG("\tload_fld   %2d         // %s\n", field_idx, fin_str_cstr(id_expr->name));
+                    break;
+                }
+            }
+            else {
+                fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
+                assert(local);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, local->is_param ? fin_op_load_arg : fin_op_load_local);
+                fin_mod_code_emit_uint8(ctx, &cmp->code, local->idx);
+                FIN_LOG("\t%s   %2d         // %s\n",
+                    local->is_param ? "load_arg" : "load_loc", local->idx, fin_str_cstr(local->name));
+            }
             break;
         }
         case fin_ast_expr_type_bool: {
