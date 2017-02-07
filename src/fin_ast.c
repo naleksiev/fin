@@ -448,9 +448,10 @@ static fin_ast_stmt* fin_ast_parse_ret_stmt(fin_ctx* ctx, fin_lex* lex) {
     stmt->base.next = NULL;
     stmt->expr = NULL;
     fin_ast_expect(lex, fin_lex_type_return);
-    if (fin_lex_match(lex, fin_lex_type_semicolon))
-        return &stmt->base;
-    stmt->expr = fin_ast_parse_expr(ctx, lex, NULL);
+    if (fin_lex_get_type(lex) == fin_lex_type_l_brace)
+        stmt->expr = fin_ast_parse_init_expr(ctx, lex);
+    else if (fin_lex_get_type(lex) != fin_lex_type_semicolon)
+        stmt->expr = fin_ast_parse_expr(ctx, lex, NULL);
     fin_ast_expect(lex, fin_lex_type_semicolon);
     return &stmt->base;
 }
