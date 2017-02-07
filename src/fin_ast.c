@@ -172,7 +172,7 @@ static fin_ast_expr* fin_ast_parse_multiplicative_expr(fin_ctx* ctx, fin_lex* le
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_unary_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_multiplicative_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -189,7 +189,7 @@ static fin_ast_expr* fin_ast_parse_additive_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_multiplicative_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_additive_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -206,7 +206,7 @@ static fin_ast_expr* fin_ast_parse_shift_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_additive_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_shift_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -244,7 +244,7 @@ static fin_ast_expr* fin_ast_parse_equality_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_relational_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_equality_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -259,7 +259,7 @@ static fin_ast_expr* fin_ast_parse_and_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_equality_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_and_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -274,7 +274,7 @@ static fin_ast_expr* fin_ast_parse_xor_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_and_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_xor_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -289,7 +289,7 @@ static fin_ast_expr* fin_ast_parse_or_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_xor_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_or_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -304,7 +304,7 @@ static fin_ast_expr* fin_ast_parse_cond_and_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_or_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_cond_and_expr(ctx, lex);
     return &bin_expr->base;
 }
 
@@ -319,7 +319,7 @@ static fin_ast_expr* fin_ast_parse_cond_or_expr(fin_ctx* ctx, fin_lex* lex) {
     bin_expr->base.type = fin_ast_expr_type_binary;
     bin_expr->op = op;
     bin_expr->lhs = lhs;
-    bin_expr->rhs = fin_ast_parse_cond_and_expr(ctx, lex);
+    bin_expr->rhs = fin_ast_parse_cond_or_expr(ctx, lex);
     return &bin_expr->base;
 }
 
