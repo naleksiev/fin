@@ -508,6 +508,7 @@ static fin_ast_stmt* fin_ast_parse_expr_or_decl_stmt(fin_ctx* ctx, fin_lex* lex)
     }
     fin_ast_id_expr* id1_expr = (fin_ast_id_expr*)ctx->alloc(NULL, sizeof(fin_ast_id_expr));
     id1_expr->base.type = fin_ast_expr_type_id;
+    id1_expr->primary = NULL;
     id1_expr->name = id1;
     fin_ast_expr* expr = &id1_expr->base;
     if (id2) {
