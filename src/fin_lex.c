@@ -162,7 +162,7 @@ static fin_lex_token fin_lex_create_name_token(fin_lex* lex) {
 
     for (int32_t i=0; i<FIN_COUNT_OF(fin_lex_keywords); i++) {
         const char* keyword = fin_lex_keywords[i].cstr;
-        if (keyword[token.len] == '\0' && strncmp(keyword, token.cstr, token.len) == 0) {
+        if (strncmp(keyword, token.cstr, token.len) == 0 && keyword[token.len] == '\0') {
             token.type = fin_lex_keywords[i].type;
             return token;
         }
