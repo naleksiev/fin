@@ -105,7 +105,7 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
             FIN_VM_NEXT();
         }
         FIN_VM_OP(fin_op_branch) {
-            int32_t offset = *ip++;
+            int16_t offset = *ip++;
             offset |= *ip++ << 8;
             ip += offset;
             FIN_VM_NEXT();
@@ -114,14 +114,15 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
             if ((--top)->b)
                 ip += 2;
             else {
-                int32_t offset = *ip++;
+                int16_t offset = *ip++;
                 offset |= *ip++ << 8;
                 ip += offset;
             }
             FIN_VM_NEXT();
         }
         FIN_VM_OP(fin_op_return) {
-            args[0] = top[-1];
+            if (func->ret_type)
+                args[0] = top[-1];
             return;
         }
         FIN_VM_OP(fin_op_pop) {
@@ -139,8 +140,9 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
 
 fin_vm* fin_vm_create(fin_ctx* ctx) {
     fin_vm* vm = (fin_vm*)ctx->alloc(NULL, sizeof(fin_vm));
+    vm->stack.top   = vm->stack.stash;
     vm->stack.begin = vm->stack.stash;
-    vm->stack.top = vm->stack.begin;
+    vm->stack.end   = vm->stack.stash + FIN_COUNT_OF(vm->stack.stash);
     vm->ctx = ctx;
     return vm;
 }
