@@ -629,7 +629,7 @@ static void fin_mod_compile_func(fin_mod_func* out_func, fin_ctx* ctx, fin_mod* 
     cmp.func = func;
     cmp.locals_count = 0;
     cmp.params_count = 0;
-    cmp.ret_type = out_func->ret_type;
+    cmp.ret_type = fin_str_clone(out_func->ret_type);
     fin_mod_code_init(&cmp.code);
 
     for (fin_ast_param* param = func->params; param; param = param->next) {
