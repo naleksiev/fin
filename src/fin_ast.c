@@ -745,6 +745,8 @@ static void fin_ast_stmt_destroy(fin_ast_module* mod, fin_ast_stmt* stmt) {
             break;
         }
         case fin_ast_stmt_type_decl: {
+            fin_ast_decl_stmt* decl_stmt = (fin_ast_decl_stmt*)stmt;
+            fin_ast_expr_destroy(mod, decl_stmt->init);
             break;
         }
         case fin_ast_stmt_type_block: {
