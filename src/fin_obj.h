@@ -14,7 +14,8 @@ typedef struct fin_obj {
 } fin_obj;
 
 fin_obj* fin_obj_create(fin_alloc alloc, int32_t fields);
-void     fin_obj_destroy(fin_alloc alloc, fin_obj* obj);
+void     fin_obj_inc_ref(fin_obj* obj);
+void     fin_obj_dec_ref(fin_alloc alloc, fin_obj* obj);
 
 #endif //#ifndef FIN_OBJ_H
 
