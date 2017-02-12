@@ -249,6 +249,7 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
                     if (type->fields[i].name == id_expr->name)
                         return type->fields[i].type;
                 }
+                printf("Unresolved field %s\n", fin_str_cstr(id_expr->name));
                 assert(0);
             }
             else {
