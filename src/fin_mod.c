@@ -240,6 +240,18 @@ static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
 
 static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_expr* expr) {
     switch (expr->type) {
+        case fin_ast_expr_type_init:
+        case fin_ast_expr_type_assign:
+            return NULL;
+        case fin_ast_expr_type_bool:
+            return fin_str_create(ctx, "bool", -1);
+        case fin_ast_expr_type_int:
+            return fin_str_create(ctx, "int", -1);
+        case fin_ast_expr_type_float:
+            return fin_str_create(ctx, "float", -1);
+        case fin_ast_expr_type_str:
+        case fin_ast_expr_type_str_interp:
+            return fin_str_create(ctx, "string", -1);
         case fin_ast_expr_type_id: {
             fin_ast_id_expr* id_expr = (fin_ast_id_expr*)expr;
             if (id_expr->primary) {
@@ -257,21 +269,6 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
                 assert(local);
                 return local->type;
             }
-        }
-        case fin_ast_expr_type_bool: {
-            return fin_str_create(ctx, "bool", -1);
-        }
-        case fin_ast_expr_type_int: {
-            return fin_str_create(ctx, "int", -1);
-        }
-        case fin_ast_expr_type_float: {
-            return fin_str_create(ctx, "float", -1);
-        }
-        case fin_ast_expr_type_str: {
-            return fin_str_create(ctx, "string", -1);
-        }
-        case fin_ast_expr_type_str_interp: {
-            return fin_str_create(ctx, "string", -1);
         }
         case fin_ast_expr_type_unary: {
             fin_ast_unary_expr* unary_expr = (fin_ast_unary_expr*)expr;
@@ -302,11 +299,6 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
             return func->ret_type;
         }
-        case fin_ast_expr_type_assign: {
-            return fin_str_create(ctx, "void", -1);
-        }
-        case fin_ast_expr_type_init:
-            assert(0);
     }
 }
 
