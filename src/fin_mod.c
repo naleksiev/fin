@@ -357,6 +357,8 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
         case fin_ast_expr_type_str: {
             fin_ast_str_expr* str_expr = (fin_ast_str_expr*)expr;
             fin_val val = { .s = str_expr->value };
+            if (val.s)
+                val.s = fin_str_clone(val.s);
             int16_t idx = fin_mod_const_idx(cmp, val);
             fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_const);
             fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
