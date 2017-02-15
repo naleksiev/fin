@@ -101,12 +101,12 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
 
 static int16_t fin_mod_const_idx(fin_mod_compiler* cmp, fin_val val) {
     fin_mod* mod = cmp->mod;
-    for (int32_t i=0; i<mod->consfin_count; i++) {
+    for (int32_t i=0; i<mod->consts_count; i++) {
         if (val.i == mod->consts[i].i)
             return i;
     }
-    mod->consts[mod->consfin_count] = val;
-    return mod->consfin_count++;
+    mod->consts[mod->consts_count] = val;
+    return mod->consts_count++;
 }
 
 static int16_t fin_mod_bind_idx(fin_mod_compiler* cmp, fin_str* sign) {
@@ -663,8 +663,8 @@ static void fin_mod_compile_type(fin_ctx* ctx, fin_ast_type* type, fin_mod_type*
     field = type->fields;
     fin_mod_field* f = dest_type->fields;
     while (field) {
-        f->name = field->name;
-        f->type = field->type->name;
+        f->name = fin_str_clone(field->name);
+        f->type = fin_str_clone(field->type->name);
         field = field->next;
         f++;
     }
@@ -699,12 +699,14 @@ fin_mod* fin_mod_create(fin_ctx* ctx, const char* name, fin_mod_func_desc* descs
 
     fin_mod* mod = (fin_mod*)ctx->alloc(NULL, sizeof(fin_mod));
     mod->name = fin_str_create(ctx, name, -1);
+    mod->types = NULL;
     mod->funcs = funcs;
-    mod->funcs_count = descs_count;
     mod->binds = NULL;
-    mod->binds_count = 0;
     mod->consts = NULL;
-    mod->consfin_count = 0;
+    mod->types_count = 0;
+    mod->funcs_count = descs_count;
+    mod->binds_count = 0;
+    mod->consts_count = 0;
     mod->next = NULL;
 
     for (int32_t i=0; i<descs_count; i++) {
@@ -759,12 +761,14 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
     fin_ast_module* module = fin_ast_parse(ctx, cstr);
 
     fin_mod* mod = (fin_mod*)ctx->alloc(NULL, sizeof(fin_mod));
+    mod->types = NULL;
+    mod->funcs = NULL;
     mod->consts = (fin_val*)ctx->alloc(NULL, sizeof(fin_val) * 128);
-    mod->consfin_count = 0;
     mod->binds = (fin_mod_func_bind*)ctx->alloc(NULL, sizeof(fin_mod_func_bind) * 128);
-    mod->binds_count = 0;
     mod->types_count = 0;
     mod->funcs_count = 0;
+    mod->consts_count = 0;
+    mod->binds_count = 0;
 
     mod->next = NULL;
 
@@ -829,6 +833,15 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
 void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
     if (mod->name)
         fin_str_destroy(ctx, mod->name);
+    for (int32_t i=0; i<mod->types_count; i++) {
+        fin_mod_type* type = &mod->types[i];
+        fin_str_destroy(ctx, type->name);
+        for (int32_t j=0; j<type->fields_count; j++) {
+            fin_str_destroy(ctx, type->fields[j].name);
+            fin_str_destroy(ctx, type->fields[j].type);
+        }
+        ctx->alloc(type->fields, 0);
+    }
     for (int32_t i=0; i<mod->funcs_count; i++) {
         fin_mod_func* func = &mod->funcs[i];
         if (func->ret_type)
@@ -843,10 +856,12 @@ void fin_mod_destroy(fin_ctx* ctx, fin_mod* mod) {
         }
         ctx->alloc(mod->binds, 0);
     }
-    if (mod->consts) {
+    if (mod->consts)
         ctx->alloc(mod->consts, 0);
-    }
-    ctx->alloc(mod->funcs, 0);
+    if (mod->funcs)
+        ctx->alloc(mod->funcs, 0);
+    if (mod->types)
+        ctx->alloc(mod->types, 0);
     ctx->alloc(mod, 0);
 }
 

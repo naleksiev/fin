@@ -671,7 +671,8 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
         }
         case fin_ast_expr_type_str: {
             fin_ast_str_expr* str_expr = (fin_ast_str_expr*)expr;
-            fin_str_destroy(mod->ctx, str_expr->value);
+            if (str_expr->value)
+                fin_str_destroy(mod->ctx, str_expr->value);
             break;
         }
         case fin_ast_expr_type_str_interp: {
@@ -707,6 +708,7 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
         }
         case fin_ast_expr_type_invoke: {
             fin_ast_invoke_expr* invoke_expr = (fin_ast_invoke_expr*)expr;
+            fin_ast_expr_destroy(mod, invoke_expr->id);
             fin_ast_expr_destroy(mod, &invoke_expr->args->base);
             break;
         }
@@ -726,7 +728,7 @@ static void fin_ast_expr_destroy(fin_ast_module* mod, fin_ast_expr* expr) {
 }
 
 static void fin_ast_stmt_destroy(fin_ast_module* mod, fin_ast_stmt* stmt) {
-    if (stmt)
+    if (!stmt)
         return;
     fin_ast_stmt_destroy(mod, stmt->next);
     switch (stmt->type) {
@@ -744,10 +746,15 @@ static void fin_ast_stmt_destroy(fin_ast_module* mod, fin_ast_stmt* stmt) {
             break;
         }
         case fin_ast_stmt_type_while: {
+            fin_ast_while_stmt* while_stmt = (fin_ast_while_stmt*)stmt;
+            fin_ast_expr_destroy(mod, while_stmt->cond);
+            fin_ast_stmt_destroy(mod, while_stmt->stmt);
             break;
         }
         case fin_ast_stmt_type_decl: {
             fin_ast_decl_stmt* decl_stmt = (fin_ast_decl_stmt*)stmt;
+            fin_ast_type_ref_destroy(mod, decl_stmt->type);
+            fin_str_destroy(mod->ctx, decl_stmt->name);
             fin_ast_expr_destroy(mod, decl_stmt->init);
             break;
         }
@@ -780,8 +787,27 @@ static void fin_ast_func_destroy(fin_ast_module* mod, fin_ast_func* func) {
     mod->ctx->alloc(func, 0);
 }
 
+static void fin_ast_field_destroy(fin_ast_module* mod, fin_ast_field* field) {
+    if (!field)
+        return;
+    fin_ast_field_destroy(mod, field->next);
+    fin_str_destroy(mod->ctx, field->name);
+    fin_ast_type_ref_destroy(mod, field->type);
+    mod->ctx->alloc(field, 0);
+}
+
+static void fin_ast_type_destroy(fin_ast_module* mod, fin_ast_type* type) {
+    if (!type)
+        return;
+    fin_ast_type_destroy(mod, type->next);
+    fin_str_destroy(mod->ctx, type->name);
+    fin_ast_field_destroy(mod, type->fields);
+    mod->ctx->alloc(type, 0);
+}
+
 void fin_ast_destroy(fin_ast_module* mod) {
     fin_ast_func_destroy(mod, mod->funcs);
+    fin_ast_type_destroy(mod, mod->types);
     fin_str_destroy(mod->ctx, mod->name);
     mod->ctx->alloc(mod, 0);
 }

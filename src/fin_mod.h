@@ -44,7 +44,7 @@ typedef struct fin_mod {
     fin_mod_func_bind* binds;
     int32_t            types_count;
     int32_t            funcs_count;
-    int32_t            consfin_count;
+    int32_t            consts_count;
     int32_t            binds_count;
     fin_mod_func*      entry;
     struct fin_mod*    next;
