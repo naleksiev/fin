@@ -144,6 +144,8 @@ static fin_ast_expr* fin_ast_parse_unary_expr(fin_ctx* ctx, fin_lex* lex) {
         return fin_ast_parse_const_expr(ctx, lex);
     else if (fin_lex_get_type(lex) == fin_lex_type_bool)
         return fin_ast_parse_const_expr(ctx, lex);
+    else if (fin_lex_get_type(lex) == fin_lex_type_string)
+        return fin_ast_parse_const_expr(ctx, lex);
     else if (fin_lex_get_type(lex) == fin_lex_type_quot)
         return fin_ast_parse_str_interp_expr(ctx, lex);
     else {

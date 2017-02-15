@@ -149,10 +149,10 @@ fin_str* fin_str_concat(fin_ctx* ctx, fin_str* a, fin_str* b) {
 }
 
 const char* fin_str_cstr(fin_str* str) {
-    return str->cstr;
+    return str ? str->cstr : "";
 }
 
 int32_t fin_str_len(fin_str* str) {
-    return str->len;
+    return str ? str->len : 0;
 }
 

@@ -244,6 +244,14 @@ static fin_lex_token fin_lex_next_token(fin_lex* lex) {
                 lex->line++;
                 break;
             case '"':
+                if (fin_lex_match_char(lex, '"')) {
+                    fin_lex_token token;
+                    token.type = fin_lex_type_string;
+                    token.cstr = lex->cstr - 2;
+                    token.line = lex->line;
+                    token.len = 0;
+                    return token;
+                }
                 lex->state_idx++;
                 lex->states[lex->state_idx].cstr = lex->cstr - 1;
                 lex->states[lex->state_idx].type = fin_lex_state_type_string;
