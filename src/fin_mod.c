@@ -184,7 +184,9 @@ static fin_str* fin_mod_invoke_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
     for (fin_ast_arg_expr* e = expr->args; e; e = e->next) {
         if (e != expr->args)
             strcat(signature, ",");
-        strcat(signature, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, &e->base)));
+        fin_str* arg_type = fin_mod_resolve_type(ctx, cmp, &e->base);
+        strcat(signature, fin_str_cstr(arg_type));
+        fin_str_destroy(ctx, arg_type);
     }
     strcat(signature, ")");
     return fin_str_create(ctx, signature, -1);
@@ -231,9 +233,13 @@ static fin_str* fin_mod_binary_get_signature(fin_ctx* ctx, fin_mod_compiler* cmp
         case fin_ast_binary_type_or:   strcat(sign, "__op_or");   break;
     }
     strcat(sign, "(");
-    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->lhs)));
+    fin_str* lhs_type = fin_mod_resolve_type(ctx, cmp, bin_expr->lhs);
+    strcat(sign, fin_str_cstr(lhs_type));
+    fin_str_destroy(ctx, lhs_type);
     strcat(sign, ",");
-    strcat(sign, fin_str_cstr(fin_mod_resolve_type(ctx, cmp, bin_expr->rhs)));
+    fin_str* rhs_type = fin_mod_resolve_type(ctx, cmp, bin_expr->rhs);
+    strcat(sign, fin_str_cstr(rhs_type));
+    fin_str_destroy(ctx, rhs_type);
     strcat(sign, ")");
     return fin_str_create(ctx, sign, -1);
 }
@@ -257,9 +263,10 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             if (id_expr->primary) {
                 fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
                 fin_mod_type* type = fin_mod_find_type(ctx, cmp->mod, type_name);
+                fin_str_destroy(ctx, type_name);
                 for (int32_t i=0; i<type->fields_count; i++) {
                     if (type->fields[i].name == id_expr->name)
-                        return type->fields[i].type;
+                        return fin_str_clone(type->fields[i].type);
                 }
                 printf("Unresolved field %s\n", fin_str_cstr(id_expr->name));
                 assert(0);
@@ -267,26 +274,27 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             else {
                 fin_mod_local* local = fin_mod_resolve_local(cmp, id_expr->name);
                 assert(local);
-                return local->type;
+                return fin_str_clone(local->type);
             }
         }
         case fin_ast_expr_type_unary: {
             fin_ast_unary_expr* unary_expr = (fin_ast_unary_expr*)expr;
             fin_str* sign = fin_mod_unary_get_signature(ctx, cmp, unary_expr);
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
-            return func->ret_type;
+            return fin_str_clone(func->ret_type);
         }
         case fin_ast_expr_type_binary: {
             fin_ast_binary_expr* bin_expr = (fin_ast_binary_expr*)expr;
             fin_str* sign = fin_mod_binary_get_signature(ctx, cmp, bin_expr);
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
-            return func->ret_type;
+            return fin_str_clone(func->ret_type);
         }
         case fin_ast_expr_type_cond: {
             fin_ast_cond_expr* cond_expr = (fin_ast_cond_expr*)expr;
             fin_str* true_type = fin_mod_resolve_type(ctx, cmp, cond_expr->true_expr);
             fin_str* false_type = fin_mod_resolve_type(ctx, cmp, cond_expr->false_expr);
             assert(true_type == false_type);
+            fin_str_destroy(ctx, false_type);
             return true_type;
         }
         case fin_ast_expr_type_arg: {
@@ -297,7 +305,7 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             fin_ast_invoke_expr* invoke_expr = (fin_ast_invoke_expr*)expr;
             fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr);
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
-            return func->ret_type;
+            return fin_str_clone(func->ret_type);
         }
     }
 }
@@ -310,6 +318,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 fin_mod_compile_expr(ctx, cmp, id_expr->primary);
                 fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
                 int32_t field_idx = fin_mod_resolve_field(ctx, cmp->mod, type_name, id_expr->name);
+                fin_str_destroy(ctx, type_name);
                 if (field_idx >= 0) {
                     fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_load_field);
                     fin_mod_code_emit_uint8(ctx, &cmp->code, field_idx);
@@ -380,7 +389,9 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
                 fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
                 FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
+                fin_str_destroy(ctx, sign);
             }
+            fin_str_destroy(ctx, type);
             if (interp_expr->next) {
                 fin_mod_compile_expr(ctx, cmp, &interp_expr->next->base);
                 fin_str* sign = fin_str_create(ctx, "__op_add(string,string)", -1);
@@ -388,6 +399,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
                 fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
                 fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
                 FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
+                fin_str_destroy(ctx, sign);
             }
             break;
         }
@@ -400,7 +412,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
             fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
-
+            fin_str_destroy(ctx, sign);
             break;
         }
         case fin_ast_expr_type_binary: {
@@ -413,6 +425,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
             fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
+            fin_str_destroy(ctx, sign);
             break;
         }
         case fin_ast_expr_type_cond: {
@@ -473,6 +486,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             if (id_expr->primary) {
                 fin_str* type_name = fin_mod_resolve_type(ctx, cmp, id_expr->primary);
                 int32_t field_idx = fin_mod_resolve_field(ctx, cmp->mod, type_name, id_expr->name);
+                fin_str_destroy(ctx, type_name);
                 if (field_idx >= 0) {
                     fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_store_field);
                     fin_mod_code_emit_uint8(ctx, &cmp->code, field_idx);
@@ -506,6 +520,7 @@ static void fin_mod_compile_init_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_a
     for (fin_ast_arg_expr* e = expr->args; e; e = e->next) {
         fin_str* arg_type = fin_mod_resolve_type(ctx, cmp, e->expr);
         assert(arg_type == type->fields[idx].type);
+        fin_str_destroy(ctx, arg_type);
         fin_mod_compile_expr(ctx, cmp, e->expr);
         idx++;
     }
@@ -824,7 +839,9 @@ fin_mod* fin_mod_compile(fin_ctx* ctx, const char* cstr) {
     fin_ast_destroy(module);
 
     mod->name = NULL;
-    mod->entry = fin_mod_find_func(ctx, mod, fin_str_create(ctx, "Main()", 6));
+    fin_str* entry_name = fin_str_create(ctx, "Main()", 6);
+    mod->entry = fin_mod_find_func(ctx, mod, entry_name);
+    fin_str_destroy(ctx, entry_name);
     fin_mod_register(ctx, mod);
     return mod;
 }
