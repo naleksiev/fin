@@ -19,7 +19,6 @@
                                     &&fin_op_store_local,     \
                                     &&fin_op_load_field,      \
                                     &&fin_op_store_field,     \
-                                    &&fin_op_set_field,       \
                                     &&fin_op_call,            \
                                     &&fin_op_branch,          \
                                     &&fin_op_branch_if_n,     \
@@ -93,11 +92,6 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
             top -= 2;
             FIN_VM_NEXT();
         }
-        FIN_VM_OP(fin_op_set_field) {
-            top[-2].o->fields[*ip++] = top[-1];
-            top--;
-            FIN_VM_NEXT();
-        }
         FIN_VM_OP(fin_op_call) {
             int32_t idx = *ip++;
             idx |= *ip++ << 8;
@@ -132,8 +126,10 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
             FIN_VM_NEXT();
         }
         FIN_VM_OP(fin_op_new) {
-            top->o = fin_obj_create(ctx->alloc, *ip++);
+            top -= *ip;
+            top->o = fin_obj_create(ctx->alloc, top, *ip);
             top++;
+            ip++;
             FIN_VM_NEXT();
         }
     }

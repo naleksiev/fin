@@ -13,7 +13,7 @@ typedef struct fin_obj {
     fin_val fields[0];
 } fin_obj;
 
-fin_obj* fin_obj_create(fin_alloc alloc, int32_t fields);
+fin_obj* fin_obj_create(fin_alloc alloc, fin_val* fields, int32_t fields_count);
 void     fin_obj_inc_ref(fin_obj* obj);
 void     fin_obj_dec_ref(fin_alloc alloc, fin_obj* obj);
 

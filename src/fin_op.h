@@ -14,7 +14,6 @@ typedef enum fin_op {
     fin_op_store_local,
     fin_op_load_field,
     fin_op_store_field,
-    fin_op_set_field,
     fin_op_call,
     fin_op_branch,
     fin_op_branch_if_n,

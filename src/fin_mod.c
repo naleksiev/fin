@@ -502,19 +502,16 @@ static void fin_mod_compile_init_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_a
     for (fin_ast_arg_expr* e = expr->args; e; e = e->next)
         args_count++;
     assert(args_count == type->fields_count);
-    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_new);
-    fin_mod_code_emit_uint8(ctx, &cmp->code, type->fields_count);
-    FIN_LOG("\tnew        %2d         // %s\n", type->fields_count, fin_str_cstr(type->name));
     int32_t idx = 0;
     for (fin_ast_arg_expr* e = expr->args; e; e = e->next) {
         fin_str* arg_type = fin_mod_resolve_type(ctx, cmp, e->expr);
         assert(arg_type == type->fields[idx].type);
         fin_mod_compile_expr(ctx, cmp, e->expr);
-        fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_set_field);
-        fin_mod_code_emit_uint8(ctx, &cmp->code, idx);
-        FIN_LOG("\tset_fld    %2d         // %s\n", idx, fin_str_cstr(type->fields[idx].name));
         idx++;
     }
+    fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_new);
+    fin_mod_code_emit_uint8(ctx, &cmp->code, type->fields_count);
+    FIN_LOG("\tnew        %2d         // %s\n", type->fields_count, fin_str_cstr(type->name));
 }
 
 static void fin_mod_compile_stmt(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_stmt* stmt) {

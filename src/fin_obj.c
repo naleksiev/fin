@@ -5,11 +5,11 @@
 
 #include "fin_obj.h"
 
-fin_obj* fin_obj_create(fin_alloc alloc, int32_t fields) {
-    fin_obj* obj = (fin_obj*)alloc(NULL, sizeof(fin_obj*) + sizeof(fin_val) * fields);
+fin_obj* fin_obj_create(fin_alloc alloc, fin_val* fields, int32_t fields_count) {
+    fin_obj* obj = (fin_obj*)alloc(NULL, sizeof(fin_obj*) + sizeof(fin_val) * fields_count);
     obj->ref = 1;
-    for (int32_t i=0; i<fields; i++)
-        obj->fields[i].i = 0;
+    for (int32_t i=0; i<fields_count; i++)
+        obj->fields[i] = fields[i];
     return obj;
 }
 
