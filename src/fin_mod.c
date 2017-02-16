@@ -115,7 +115,7 @@ static int16_t fin_mod_bind_idx(fin_mod_compiler* cmp, fin_str* sign) {
         if (sign == mod->binds[i].sign)
             return i;
     }
-    mod->binds[mod->binds_count].sign = sign;
+    mod->binds[mod->binds_count].sign = fin_str_clone(sign);
     mod->binds[mod->binds_count].func = NULL;
     return mod->binds_count++;
 }
@@ -281,12 +281,14 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             fin_ast_unary_expr* unary_expr = (fin_ast_unary_expr*)expr;
             fin_str* sign = fin_mod_unary_get_signature(ctx, cmp, unary_expr);
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
+            fin_str_destroy(ctx, sign);
             return fin_str_clone(func->ret_type);
         }
         case fin_ast_expr_type_binary: {
             fin_ast_binary_expr* bin_expr = (fin_ast_binary_expr*)expr;
             fin_str* sign = fin_mod_binary_get_signature(ctx, cmp, bin_expr);
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
+            fin_str_destroy(ctx, sign);
             return fin_str_clone(func->ret_type);
         }
         case fin_ast_expr_type_cond: {
@@ -305,6 +307,7 @@ static fin_str* fin_mod_resolve_type(fin_ctx* ctx, fin_mod_compiler* cmp, fin_as
             fin_ast_invoke_expr* invoke_expr = (fin_ast_invoke_expr*)expr;
             fin_str* sign = fin_mod_invoke_get_signature(ctx, cmp, invoke_expr);
             fin_mod_func* func = fin_mod_find_func(ctx, cmp->mod, sign);
+            fin_str_destroy(ctx, sign);
             return fin_str_clone(func->ret_type);
         }
     }
@@ -473,6 +476,7 @@ static void fin_mod_compile_expr(fin_ctx* ctx, fin_mod_compiler* cmp, fin_ast_ex
             fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_call);
             fin_mod_code_emit_uint16(ctx, &cmp->code, idx);
             FIN_LOG("\tcall       %2d         // %s\n", idx, fin_str_cstr(sign));
+            fin_str_destroy(ctx, sign);
             break;
         }
         case fin_ast_expr_type_assign: {

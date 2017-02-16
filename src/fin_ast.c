@@ -560,7 +560,7 @@ static fin_ast_param* fin_ast_parse_param(fin_ctx* ctx, fin_lex* lex) {
 static fin_ast_func* fin_ast_parse_func(fin_ctx* ctx, fin_lex* lex, fin_ast_type_ref* type, fin_str* name) {
     fin_ast_func* func = (fin_ast_func*)ctx->alloc(NULL, sizeof(fin_ast_func));
     func->ret = type;
-    func->name = fin_str_clone(name);
+    func->name = name;
     fin_ast_expect(lex, fin_lex_type_l_paren);
     fin_ast_param** tail = &func->params;
     *tail = NULL;
