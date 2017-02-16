@@ -83,11 +83,13 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
             FIN_VM_NEXT();
         }
         FIN_VM_OP(fin_op_load_field) {
-            top[-1] = top[-1].o->fields[*ip++];
+            if (top[-1].o)
+                top[-1] = top[-1].o->fields[*ip++];
             FIN_VM_NEXT();
         }
         FIN_VM_OP(fin_op_store_field) {
-            top[-2].o->fields[*ip++] = top[-1];
+            if (top[-2].o)
+                top[-2].o->fields[*ip++] = top[-1];
             top -= 2;
             FIN_VM_NEXT();
         }
