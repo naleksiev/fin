@@ -7,8 +7,8 @@
 #include "../fin_mod.h"
 #include <time.h>
 
-static void fin_time_clock(fin_ctx* ctx, fin_val* args) {
-    args[0].f = (double)clock() / CLOCKS_PER_SEC;
+static void fin_time_clock(fin_ctx* ctx, const fin_val* args, fin_val* res) {
+    res->f = (double)clock() / CLOCKS_PER_SEC;
 }
 
 void fin_time_register(fin_ctx* ctx) {

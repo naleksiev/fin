@@ -7,15 +7,15 @@
 #include "../fin_mod.h"
 #include <stdio.h>
 
-static void fin_io_write(fin_ctx* ctx, fin_val* args) {
+static void fin_io_write(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
     printf("%s", fin_str_cstr(args[0].s));
 }
 
-static void fin_io_write_line(fin_ctx* ctx, fin_val* args) {
+static void fin_io_write_line(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
     printf("%s\n", fin_str_cstr(args[0].s));
 }
 
-static void fin_io_file_write(fin_ctx* ctx, fin_val* args) {
+static void fin_io_file_write(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
     const char* file = fin_str_cstr(args[0].s);
     if (!file)
         return;

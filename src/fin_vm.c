@@ -150,8 +150,12 @@ void fin_vm_destroy(fin_vm* vm) {
 }
 
 inline void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
-    if (func->is_native)
-        (*func->func)(ctx, stack - func->args);
+    if (func->is_native) {
+        fin_val result;
+        (*func->func)(ctx, stack - func->args, &result);
+        if (func->ret_type)
+            stack[-func->args] = result;
+    }
     else
         fin_vm_interpret(ctx, func, stack);
 }

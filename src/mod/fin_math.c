@@ -7,36 +7,36 @@
 #include "../fin_mod.h"
 #include <math.h>
 
-static void fin_math_abs_int(fin_ctx* ctx, fin_val* args)    { if (args[0].i < 0) args[0].i = -args[0].i; }
-static void fin_math_abs_float(fin_ctx* ctx, fin_val* args)  { args[0].f = fabs(args[0].f); }
-static void fin_math_ceiling(fin_ctx* ctx, fin_val* args)    { args[0].f = ceil(args[0].f); }
-static void fin_math_floor(fin_ctx* ctx, fin_val* args)      { args[0].f = floor(args[0].f); }
-static void fin_math_log(fin_ctx* ctx, fin_val* args)        { args[0].f = log(args[0].f); }
-static void fin_math_log2(fin_ctx* ctx, fin_val* args)       { args[0].f = log2(args[0].f); }
-static void fin_math_log10(fin_ctx* ctx, fin_val* args)      { args[0].f = log10(args[0].f); }
-static void fin_math_max_int(fin_ctx* ctx, fin_val* args)    { args[0].i = args[0].i > args[1].i ? args[0].i : args[1].i; }
-static void fin_math_max_float(fin_ctx* ctx, fin_val* args)  { args[0].f = args[0].f > args[1].f ? args[0].f : args[1].f; }
-static void fin_math_min_int(fin_ctx* ctx, fin_val* args)    { args[0].i = args[0].i < args[1].i ? args[0].i : args[1].i; }
-static void fin_math_min_float(fin_ctx* ctx, fin_val* args)  { args[0].f = args[0].f < args[1].f ? args[0].f : args[1].f; }
-static void fin_math_pow(fin_ctx* ctx, fin_val* args)        { args[0].f = pow(args[0].f, args[1].f); }
-static void fin_math_round(fin_ctx* ctx, fin_val* args)      { args[0].f = round(args[0].f); }
-static void fin_math_sign_int(fin_ctx* ctx, fin_val* args)   { args[0].i = args[0].i < 0 ? -1 : 1; }
-static void fin_math_sign_float(fin_ctx* ctx, fin_val* args) { args[0].f = args[0].f < 0.0 ? -1.0 : 1.0; }
-static void fin_math_sqrt(fin_ctx* ctx, fin_val* args)       { args[0].f = sqrt(args[0].f); }
+static void fin_math_abs_int(fin_ctx* ctx, const fin_val* args, fin_val* ret)    { if (args[0].i < 0) ret->i = -args[0].i; }
+static void fin_math_abs_float(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = fabs(args[0].f); }
+static void fin_math_ceiling(fin_ctx* ctx, const fin_val* args, fin_val* ret)    { ret->f = ceil(args[0].f); }
+static void fin_math_floor(fin_ctx* ctx, const fin_val* args, fin_val* ret)      { ret->f = floor(args[0].f); }
+static void fin_math_log(fin_ctx* ctx, const fin_val* args, fin_val* ret)        { ret->f = log(args[0].f); }
+static void fin_math_log2(fin_ctx* ctx, const fin_val* args, fin_val* ret)       { ret->f = log2(args[0].f); }
+static void fin_math_log10(fin_ctx* ctx, const fin_val* args, fin_val* ret)      { ret->f = log10(args[0].f); }
+static void fin_math_max_int(fin_ctx* ctx, const fin_val* args, fin_val* ret)    { ret->i = args[0].i > args[1].i ? args[0].i : args[1].i; }
+static void fin_math_max_float(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = args[0].f > args[1].f ? args[0].f : args[1].f; }
+static void fin_math_min_int(fin_ctx* ctx, const fin_val* args, fin_val* ret)    { ret->i = args[0].i < args[1].i ? args[0].i : args[1].i; }
+static void fin_math_min_float(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = args[0].f < args[1].f ? args[0].f : args[1].f; }
+static void fin_math_pow(fin_ctx* ctx, const fin_val* args, fin_val* ret)        { ret->f = pow(args[0].f, args[1].f); }
+static void fin_math_round(fin_ctx* ctx, const fin_val* args, fin_val* ret)      { ret->f = round(args[0].f); }
+static void fin_math_sign_int(fin_ctx* ctx, const fin_val* args, fin_val* ret)   { ret->i = args[0].i < 0 ? -1 : 1; }
+static void fin_math_sign_float(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = args[0].f < 0.0 ? -1.0 : 1.0; }
+static void fin_math_sqrt(fin_ctx* ctx, const fin_val* args, fin_val* ret)       { ret->f = sqrt(args[0].f); }
 
-static void fin_math_acos(fin_ctx* ctx, fin_val* args)  { args[0].f = acos(args[0].f); }
-static void fin_math_asin(fin_ctx* ctx, fin_val* args)  { args[0].f = asin(args[0].f); }
-static void fin_math_atan(fin_ctx* ctx, fin_val* args)  { args[0].f = atan(args[0].f); }
-static void fin_math_atan2(fin_ctx* ctx, fin_val* args) { args[0].f = atan2(args[0].f, args[1].f); }
-static void fin_math_cos(fin_ctx* ctx, fin_val* args)   { args[0].f = cos(args[0].f); }
-static void fin_math_sin(fin_ctx* ctx, fin_val* args)   { args[0].f = sin(args[0].f); }
-static void fin_math_tan(fin_ctx* ctx, fin_val* args)   { args[0].f = tan(args[0].f); }
-static void fin_math_acosh(fin_ctx* ctx, fin_val* args) { args[0].f = acosh(args[0].f); }
-static void fin_math_asinh(fin_ctx* ctx, fin_val* args) { args[0].f = asinh(args[0].f); }
-static void fin_math_atanh(fin_ctx* ctx, fin_val* args) { args[0].f = atanh(args[0].f); }
-static void fin_math_cosh(fin_ctx* ctx, fin_val* args)  { args[0].f = cosh(args[0].f); }
-static void fin_math_sinh(fin_ctx* ctx, fin_val* args)  { args[0].f = sinh(args[0].f); }
-static void fin_math_tanh(fin_ctx* ctx, fin_val* args)  { args[0].f = tanh(args[0].f); }
+static void fin_math_acos(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = acos(args[0].f); }
+static void fin_math_asin(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = asin(args[0].f); }
+static void fin_math_atan(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = atan(args[0].f); }
+static void fin_math_atan2(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = atan2(args[0].f, args[1].f); }
+static void fin_math_cos(fin_ctx* ctx, const fin_val* args, fin_val* ret)   { ret->f = cos(args[0].f); }
+static void fin_math_sin(fin_ctx* ctx, const fin_val* args, fin_val* ret)   { ret->f = sin(args[0].f); }
+static void fin_math_tan(fin_ctx* ctx, const fin_val* args, fin_val* ret)   { ret->f = tan(args[0].f); }
+static void fin_math_acosh(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = acosh(args[0].f); }
+static void fin_math_asinh(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = asinh(args[0].f); }
+static void fin_math_atanh(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = atanh(args[0].f); }
+static void fin_math_cosh(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = cosh(args[0].f); }
+static void fin_math_sinh(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = sinh(args[0].f); }
+static void fin_math_tanh(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->f = tanh(args[0].f); }
 
 void fin_math_register(fin_ctx* ctx) {
     fin_mod_func_desc descs[] = {
