@@ -207,6 +207,11 @@ typedef struct fin_ast_block_stmt {
     fin_ast_stmt* stmts;
 } fin_ast_block_stmt;
 
+typedef struct fin_ast_generic {
+    fin_str*                name;
+    struct fin_ast_generic* next;
+} fin_ast_generic;
+
 typedef struct fin_ast_enum_val {
     fin_str*      name;
     fin_ast_expr* init;
@@ -234,12 +239,14 @@ typedef struct fin_ast_func {
     fin_ast_type_ref*    ret;
     fin_ast_param*       params;
     fin_ast_block_stmt*  block;
+    fin_ast_generic*     generics;
     struct fin_ast_func* next;
 } fin_ast_func;
 
 typedef struct fin_ast_type {
     fin_str*             name;
     fin_ast_field*       fields;
+    fin_ast_generic*     generics;
     struct fin_ast_type* next;
 } fin_ast_type;
 

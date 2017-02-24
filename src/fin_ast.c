@@ -557,10 +557,27 @@ static fin_ast_param* fin_ast_parse_param(fin_ctx* ctx, fin_lex* lex) {
     return param;
 }
 
+static fin_ast_generic* fin_ast_parse_generics(fin_ctx* ctx, fin_lex* lex) {
+    if (!fin_lex_match(lex, fin_lex_type_lt))
+        return NULL;
+    fin_ast_generic*  gen  = NULL;
+    fin_ast_generic** tail = &gen;
+    while (true) {
+        *tail = (fin_ast_generic*)ctx->alloc(NULL, sizeof(fin_ast_generic));
+        (*tail)->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+        tail = &(*tail)->next;
+        if (!fin_lex_match(lex, fin_lex_type_comma))
+            break;
+    }
+    fin_ast_expect(lex, fin_lex_type_gt);
+    return gen;
+}
+
 static fin_ast_func* fin_ast_parse_func(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_func* func = (fin_ast_func*)ctx->alloc(NULL, sizeof(fin_ast_func));
     func->ret = fin_ast_parse_type_ref(ctx, lex);
     func->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+    func->generics = fin_ast_parse_generics(ctx, lex);
     fin_ast_expect(lex, fin_lex_type_l_paren);
     fin_ast_param** tail = &func->params;
     *tail = NULL;
@@ -588,6 +605,7 @@ static fin_ast_type* fin_lex_parse_type(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_type* type = (fin_ast_type*)ctx->alloc(NULL, sizeof(fin_ast_type));
     fin_ast_expect(lex, fin_lex_type_struct);
     type->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+    type->generics = fin_ast_parse_generics(ctx, lex);
     fin_ast_expect(lex, fin_lex_type_l_brace);
     fin_ast_field** field_tail = &type->fields;
     *field_tail = NULL;
