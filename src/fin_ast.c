@@ -557,10 +557,10 @@ static fin_ast_param* fin_ast_parse_param(fin_ctx* ctx, fin_lex* lex) {
     return param;
 }
 
-static fin_ast_func* fin_ast_parse_func(fin_ctx* ctx, fin_lex* lex, fin_ast_type_ref* type, fin_str* name) {
+static fin_ast_func* fin_ast_parse_func(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_func* func = (fin_ast_func*)ctx->alloc(NULL, sizeof(fin_ast_func));
-    func->ret = type;
-    func->name = name;
+    func->ret = fin_ast_parse_type_ref(ctx, lex);
+    func->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
     fin_ast_expect(lex, fin_lex_type_l_paren);
     fin_ast_param** tail = &func->params;
     *tail = NULL;
@@ -624,12 +624,9 @@ fin_ast_module* fin_ast_parse(fin_ctx* ctx, const char* str) {
             *type_tail = fin_lex_parse_type(ctx, lex);
             type_tail = &(*type_tail)->next;
         }
-        fin_ast_type_ref* type = fin_ast_parse_type_ref(ctx, lex);
-        fin_str* name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
-        if (fin_lex_get_type(lex) == fin_lex_type_l_paren) {
-            *func_tail = fin_ast_parse_func(ctx, lex, type, name);
+        else {
+            *func_tail = fin_ast_parse_func(ctx, lex);
             func_tail = &(*func_tail)->next;
-
         }
     }
 
