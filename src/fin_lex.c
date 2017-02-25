@@ -23,6 +23,7 @@ static const struct {
     { "break", fin_lex_type_break },
     { "return", fin_lex_type_return },
     { "struct", fin_lex_type_struct },
+    { "enum", fin_lex_type_enum },
 };
 
 typedef struct fin_lex_token {

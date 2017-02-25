@@ -74,6 +74,7 @@ typedef enum fin_lex_type {
     fin_lex_type_break,
     fin_lex_type_return,
     fin_lex_type_struct,
+    fin_lex_type_enum,
 
     fin_lex_type_error,
     fin_lex_type_eof,

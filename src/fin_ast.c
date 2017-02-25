@@ -592,6 +592,31 @@ static fin_ast_func* fin_ast_parse_func(fin_ctx* ctx, fin_lex* lex) {
     return func;
 }
 
+static fin_ast_enum_val* fin_ast_parse_enum_val(fin_ctx* ctx, fin_lex* lex) {
+    fin_ast_enum_val* val = (fin_ast_enum_val*)ctx->alloc(NULL, sizeof(fin_ast_enum_val));
+    val->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+    val->expr = fin_lex_match(lex, fin_lex_type_eq) ? fin_ast_parse_expr(ctx, lex, NULL) : NULL;
+    val->next = NULL;
+    return val;
+}
+
+static fin_ast_enum* fin_ast_parse_enum(fin_ctx* ctx, fin_lex* lex) {
+    fin_ast_enum* e = (fin_ast_enum*)ctx->alloc(NULL, sizeof(fin_ast_enum));
+    fin_ast_expect(lex, fin_lex_type_enum);
+    e->name = fin_str_from_lex(ctx, fin_lex_consume_name(lex));
+    fin_ast_expect(lex, fin_lex_type_l_brace);
+    fin_ast_enum_val** val_tail = &e->values;
+    *val_tail = NULL;
+    while (!fin_lex_match(lex, fin_lex_type_r_brace)) {
+        if (e->values)
+            fin_ast_expect(lex, fin_lex_type_comma);
+        *val_tail = fin_ast_parse_enum_val(ctx, lex);
+        val_tail = &(*val_tail)->next;
+    }
+    e->next = NULL;
+    return e;
+}
+
 static fin_ast_field* fin_lex_parse_field(fin_ctx* ctx, fin_lex* lex) {
     fin_ast_field* field = (fin_ast_field*)ctx->alloc(NULL, sizeof(fin_ast_field));
     field->type = fin_ast_parse_type_ref(ctx, lex);
@@ -623,16 +648,16 @@ fin_ast_module* fin_ast_parse(fin_ctx* ctx, const char* str) {
 
 /*
     if (fin_lex_match(&lex, fin_lex_type_module)) {
-
+    }
+    while (fin_lex_match(lex, fin_lex_type_import)) {
     }
 */
 
-    while (fin_lex_match(lex, fin_lex_type_import)) {
-
-    }
-
     fin_ast_func*  funcs = NULL;
     fin_ast_func** func_tail = &funcs;
+
+    fin_ast_enum*  enums = NULL;
+    fin_ast_enum** enum_tail = &enums;
 
     fin_ast_type*  types = NULL;
     fin_ast_type** type_tail = &types;
@@ -641,6 +666,10 @@ fin_ast_module* fin_ast_parse(fin_ctx* ctx, const char* str) {
         if (fin_lex_get_type(lex) == fin_lex_type_struct) {
             *type_tail = fin_lex_parse_type(ctx, lex);
             type_tail = &(*type_tail)->next;
+        }
+        else  if (fin_lex_get_type(lex) == fin_lex_type_enum) {
+            *enum_tail = fin_ast_parse_enum(ctx, lex);
+            enum_tail = &(*enum_tail)->next;
         }
         else {
             *func_tail = fin_ast_parse_func(ctx, lex);
@@ -654,6 +683,7 @@ fin_ast_module* fin_ast_parse(fin_ctx* ctx, const char* str) {
     module->ctx = ctx;
     module->name = name;
     module->types = types;
+    module->enums = enums;
     module->funcs = funcs;
     return module;
 }

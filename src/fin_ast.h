@@ -213,13 +213,15 @@ typedef struct fin_ast_generic {
 } fin_ast_generic;
 
 typedef struct fin_ast_enum_val {
-    fin_str*      name;
-    fin_ast_expr* init;
+    fin_str*                 name;
+    fin_ast_expr*            expr;
+    struct fin_ast_enum_val* next;
 } fin_ast_enum_val;
 
 typedef struct fin_ast_enum {
-    fin_str*          name;
-    fin_ast_enum_val* values;
+    fin_str*             name;
+    fin_ast_enum_val*    values;
+    struct fin_ast_enum* next;
 } fin_ast_enum;
 
 typedef struct fin_ast_field {
@@ -254,6 +256,7 @@ typedef struct fin_ast_module {
     fin_ctx*      ctx;
     fin_str*      name;
     fin_ast_type* types;
+    fin_ast_enum* enums;
     fin_ast_func* funcs;
 } fin_ast_module;
 
