@@ -112,8 +112,10 @@ fin_str_t* fin_str_create(fin_ctx_t* ctx, const char* cstr, int32_t len) {
             slot = (slot + 1) % pool->capacity;
         } while (slot != end_slot);
     }
-    if (pool->count + 1 > pool->capacity * 3 / 4)
-        fin_str_resize(pool, pool->capacity < 8 ? 16 : pool->capacity * 2);
+    if (pool->capacity == 0)
+        fin_str_resize(pool, 16);
+    else if (pool->count + 1 > pool->capacity * 3 / 4)
+        fin_str_resize(pool, pool->capacity * 2);
     fin_str_t* str = (fin_str_t*)pool->alloc(NULL, sizeof(fin_str_t) + len);
     str->ref = 1;
     str->len = len;
