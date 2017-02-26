@@ -6,7 +6,7 @@
 #ifndef FIN_OP_H
 #define FIN_OP_H
 
-typedef enum fin_op {
+typedef enum fin_op_t {
     fin_op_load_const,
     fin_op_load_arg,
     fin_op_store_arg,
@@ -20,7 +20,7 @@ typedef enum fin_op {
     fin_op_return,
     fin_op_pop,
     fin_op_new,
-} fin_op;
+} fin_op_t_t;
 
 #endif //#ifndef FIN_OP_H
 

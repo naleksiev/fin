@@ -6,7 +6,7 @@
 #include <fin/fin.h>
 
 int main(int argc, const char* argv[]) {
-    fin_ctx* ctx = fin_ctx_create_default();
+    fin_ctx_t* ctx = fin_ctx_create_default();
     if (argc == 1)
         fin_ctx_eval_str(ctx, "void Main() { io.WriteLine(\"Hello, world!\"); }");
     else

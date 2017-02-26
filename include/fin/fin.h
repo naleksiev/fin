@@ -34,34 +34,33 @@ extern "C" {
 // free:    ptr != NULL, size == 0
 typedef void* (*fin_alloc)(void* ptr, unsigned int size);
 
-typedef struct fin_str fin_str;
-typedef struct fin_obj fin_obj;
-typedef struct fin_ctx fin_ctx;
+typedef struct fin_str_t fin_str_t;
+typedef struct fin_obj_t fin_obj_t;
+typedef struct fin_ctx_t fin_ctx_t;
 
-typedef union fin_val {
-    bool            b;
-    int64_t         i;
-    double          f;
-    struct fin_str* s;
-    struct fin_obj* o;
-} fin_val;
+typedef union fin_val_t {
+    bool              b;
+    int64_t           i;
+    double            f;
+    struct fin_str_t* s;
+    struct fin_obj_t* o;
+} fin_val_t;
 
-fin_str*    fin_str_create(fin_ctx* ctx, const char* str, int32_t len);
-void        fin_str_destroy(fin_ctx* ctx, fin_str* str);
-fin_str*    fin_str_clone(fin_str* str);
-fin_str*    fin_str_concat(fin_ctx* ctx, fin_str* a, fin_str* b);
-const char* fin_str_cstr(fin_str* str);
-int32_t     fin_str_len(fin_str* str);
+fin_str_t*  fin_str_create(fin_ctx_t* ctx, const char* str, int32_t len);
+void        fin_str_destroy(fin_ctx_t* ctx, fin_str_t* str);
+fin_str_t*  fin_str_clone(fin_str_t* str);
+fin_str_t*  fin_str_concat(fin_ctx_t* ctx, fin_str_t* a, fin_str_t* b);
+const char* fin_str_cstr(fin_str_t* str);
+int32_t     fin_str_len(fin_str_t* str);
 
-fin_ctx* fin_ctx_create_default();
-fin_ctx* fin_ctx_create(fin_alloc alloc);
-void     fin_ctx_destroy(fin_ctx* ctx);
-void     fin_ctx_eval_str(fin_ctx* ctx, const char* cstr);
-void     fin_ctx_eval_file(fin_ctx* ctx, const char* path);
+fin_ctx_t* fin_ctx_create_default();
+fin_ctx_t* fin_ctx_create(fin_alloc alloc);
+void       fin_ctx_destroy(fin_ctx_t* ctx);
+void       fin_ctx_eval_str(fin_ctx_t* ctx, const char* cstr);
+void       fin_ctx_eval_file(fin_ctx_t* ctx, const char* path);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //#ifndef FIN_H
-

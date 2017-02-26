@@ -9,65 +9,65 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-static void fin_std_bool_and (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].b && args[1].b; }
-static void fin_std_bool_or  (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].b || args[1].b; }
+static void fin_std_bool_and (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].b && args[1].b; }
+static void fin_std_bool_or  (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].b || args[1].b; }
 
-static void fin_std_int_pos (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i; }
-static void fin_std_int_neg (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = -args[0].i; }
-static void fin_std_int_not (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = !args[0].i; }
-static void fin_std_int_bnot(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = ~args[0].i; }
-static void fin_std_int_inc (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i + 1; }
-static void fin_std_int_dec (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i - 1; }
-static void fin_std_int_add (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  + args[1].i; }
-static void fin_std_int_sub (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  - args[1].i; }
-static void fin_std_int_mul (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  * args[1].i; }
-static void fin_std_int_div (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  / args[1].i; }
-static void fin_std_int_mod (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  % args[1].i; }
-static void fin_std_int_band(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  & args[1].i; }
-static void fin_std_int_bor (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  | args[1].i; }
-static void fin_std_int_xor (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i  ^ args[1].i; }
-static void fin_std_int_shl (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i << args[1].i; }
-static void fin_std_int_shr (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = args[0].i >> args[1].i; }
-static void fin_std_int_lt  (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].i  < args[1].i; }
-static void fin_std_int_leq (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].i <= args[1].i; }
-static void fin_std_int_gt  (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].i  > args[1].i; }
-static void fin_std_int_geq (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].i >= args[1].i; }
-static void fin_std_int_eq  (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].i == args[1].i; }
-static void fin_std_int_neq (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].i != args[1].i; }
-static void fin_std_int_to_float(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = (double)(args[0].i); }
+static void fin_std_int_pos (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i; }
+static void fin_std_int_neg (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = -args[0].i; }
+static void fin_std_int_not (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = !args[0].i; }
+static void fin_std_int_bnot(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = ~args[0].i; }
+static void fin_std_int_inc (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i + 1; }
+static void fin_std_int_dec (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i - 1; }
+static void fin_std_int_add (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  + args[1].i; }
+static void fin_std_int_sub (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  - args[1].i; }
+static void fin_std_int_mul (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  * args[1].i; }
+static void fin_std_int_div (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  / args[1].i; }
+static void fin_std_int_mod (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  % args[1].i; }
+static void fin_std_int_band(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  & args[1].i; }
+static void fin_std_int_bor (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  | args[1].i; }
+static void fin_std_int_xor (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i  ^ args[1].i; }
+static void fin_std_int_shl (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i << args[1].i; }
+static void fin_std_int_shr (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = args[0].i >> args[1].i; }
+static void fin_std_int_lt  (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].i  < args[1].i; }
+static void fin_std_int_leq (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].i <= args[1].i; }
+static void fin_std_int_gt  (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].i  > args[1].i; }
+static void fin_std_int_geq (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].i >= args[1].i; }
+static void fin_std_int_eq  (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].i == args[1].i; }
+static void fin_std_int_neq (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].i != args[1].i; }
+static void fin_std_int_to_float(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->f = (double)(args[0].i); }
 
-static void fin_std_int_to_str(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
+static void fin_std_int_to_str(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) {
     char buffer[64];
     sprintf(buffer, "%" PRIu64, args[0].i);
     ret->s = fin_str_create(ctx, buffer, -1);
 }
 
-static void fin_std_float_neg(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = -args[0].f; }
-static void fin_std_float_add(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = args[0].f  + args[1].f; }
-static void fin_std_float_sub(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = args[0].f  - args[1].f; }
-static void fin_std_float_mul(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = args[0].f  * args[1].f; }
-static void fin_std_float_div(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = args[0].f  / args[1].f; }
-static void fin_std_float_mod(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->f = fmod(args[0].f, args[1].f); }
-static void fin_std_float_lt (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].f  < args[1].f; }
-static void fin_std_float_leq(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].f <= args[1].f; }
-static void fin_std_float_gt (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].f  > args[1].f; }
-static void fin_std_float_geq(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].f >= args[1].f; }
-static void fin_std_float_eq (fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].f == args[1].f; }
-static void fin_std_float_neq(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = args[0].f != args[1].f; }
-static void fin_std_float_to_int(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->i = (int64_t)(args[0].f); }
+static void fin_std_float_neg(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->f = -args[0].f; }
+static void fin_std_float_add(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->f = args[0].f  + args[1].f; }
+static void fin_std_float_sub(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->f = args[0].f  - args[1].f; }
+static void fin_std_float_mul(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->f = args[0].f  * args[1].f; }
+static void fin_std_float_div(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->f = args[0].f  / args[1].f; }
+static void fin_std_float_mod(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->f = fmod(args[0].f, args[1].f); }
+static void fin_std_float_lt (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].f  < args[1].f; }
+static void fin_std_float_leq(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].f <= args[1].f; }
+static void fin_std_float_gt (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].f  > args[1].f; }
+static void fin_std_float_geq(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].f >= args[1].f; }
+static void fin_std_float_eq (fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].f == args[1].f; }
+static void fin_std_float_neq(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = args[0].f != args[1].f; }
+static void fin_std_float_to_int(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->i = (int64_t)(args[0].f); }
 
-static void fin_std_float_to_str(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
+static void fin_std_float_to_str(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) {
     char buffer[64];
     sprintf(buffer, "%g", args[0].f);
     ret->s = fin_str_create(ctx, buffer, -1);
 }
 
-static void fin_std_str_add(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->s = fin_str_concat(ctx, args[0].s, args[1].s); }
-static void fin_std_str_eq(fin_ctx* ctx, const fin_val* args, fin_val* ret)  { ret->b = (args[0].s == args[1].s); }
-static void fin_std_str_neq(fin_ctx* ctx, const fin_val* args, fin_val* ret) { ret->b = (args[0].s != args[1].s); }
+static void fin_std_str_add(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->s = fin_str_concat(ctx, args[0].s, args[1].s); }
+static void fin_std_str_eq(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret)  { ret->b = (args[0].s == args[1].s); }
+static void fin_std_str_neq(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) { ret->b = (args[0].s != args[1].s); }
 
-void fin_std_register(fin_ctx* ctx) {
-    fin_mod_func_desc descs[] = {
+void fin_std_register(fin_ctx_t* ctx) {
+    fin_mod_func_desc_t descs[] = {
         { "bool __op_and(bool,bool)", &fin_std_bool_and },
         { "bool __op_or(bool,bool)",  &fin_std_bool_or  },
 

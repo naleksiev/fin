@@ -8,10 +8,10 @@
 
 #include <fin/fin.h>
 
-typedef struct fin_str_pool fin_str_pool;
+typedef struct fin_str_pool_t fin_str_pool_t;
 
-fin_str_pool* fin_str_pool_create(fin_alloc alloc);
-void          fin_str_pool_destroy(fin_str_pool* pool);
+fin_str_pool_t* fin_str_pool_create(fin_alloc alloc);
+void            fin_str_pool_destroy(fin_str_pool_t* pool);
 
 #endif //#ifndef FIN_STR_H
 

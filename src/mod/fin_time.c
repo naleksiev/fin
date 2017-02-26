@@ -7,12 +7,12 @@
 #include "../fin_mod.h"
 #include <time.h>
 
-static void fin_time_clock(fin_ctx* ctx, const fin_val* args, fin_val* res) {
+static void fin_time_clock(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* res) {
     res->f = (double)clock() / CLOCKS_PER_SEC;
 }
 
-void fin_time_register(fin_ctx* ctx) {
-    fin_mod_func_desc descs[] = {
+void fin_time_register(fin_ctx_t* ctx) {
+    fin_mod_func_desc_t descs[] = {
         { "float Clock()", &fin_time_clock},
     };
 

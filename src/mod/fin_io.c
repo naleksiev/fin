@@ -7,15 +7,15 @@
 #include "../fin_mod.h"
 #include <stdio.h>
 
-static void fin_io_write(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
+static void fin_io_write(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) {
     printf("%s", fin_str_cstr(args[0].s));
 }
 
-static void fin_io_write_line(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
+static void fin_io_write_line(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) {
     printf("%s\n", fin_str_cstr(args[0].s));
 }
 
-static void fin_io_file_write(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
+static void fin_io_file_write(fin_ctx_t* ctx, const fin_val_t* args, fin_val_t* ret) {
     const char* file = fin_str_cstr(args[0].s);
     if (!file)
         return;
@@ -26,8 +26,8 @@ static void fin_io_file_write(fin_ctx* ctx, const fin_val* args, fin_val* ret) {
     fclose(fp);
 }
 
-void fin_io_register(fin_ctx* ctx) {
-    fin_mod_func_desc descs[] = {
+void fin_io_register(fin_ctx_t* ctx) {
+    fin_mod_func_desc_t descs[] = {
         { "void Write(string)", &fin_io_write },
         { "void WriteLine(string)", &fin_io_write_line },
         { "void FileWrite(string,string)", &fin_io_file_write },

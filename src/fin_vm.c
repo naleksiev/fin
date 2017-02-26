@@ -38,24 +38,24 @@
     #define FIN_VM_OP(op)       case op:
 #endif
 
-typedef struct fin_vm_stack {
-    fin_val* top;
-    fin_val* begin;
-    fin_val* end;
-    fin_val  stash[64];
-} fin_vm_stack;
+typedef struct fin_vm_stack_t {
+    fin_val_t* top;
+    fin_val_t* begin;
+    fin_val_t* end;
+    fin_val_t  stash[64];
+} fin_vm_stack_t;
 
-typedef struct fin_vm {
-    fin_vm_stack stack;
-    fin_ctx*     ctx;
-} fin_vm;
+typedef struct fin_vm_t {
+    fin_vm_stack_t stack;
+    fin_ctx_t*     ctx;
+} fin_vm_t;
 
-void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack);
+void fin_vm_invoke_int(fin_ctx_t* ctx, fin_mod_func_t* func, fin_val_t* stack);
 
-void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
-    fin_mod* mod  = func->mod;
-    fin_val* args = stack - func->args;
-    fin_val* top  = stack + func->locals;
+void fin_vm_interpret(fin_ctx_t* ctx, fin_mod_func_t* func, fin_val_t* stack) {
+    fin_mod_t* mod  = func->mod;
+    fin_val_t* args = stack - func->args;
+    fin_val_t* top  = stack + func->locals;
     uint8_t* ip   = func->code;
 
     FIN_VM_LOOP_BEGIN() {
@@ -95,7 +95,7 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
         FIN_VM_OP(fin_op_call) {
             int32_t idx = *ip++;
             idx |= *ip++ << 8;
-            fin_mod_func* func = mod->binds[idx].func;
+            fin_mod_func_t* func = mod->binds[idx].func;
             fin_vm_invoke_int(ctx, func, top);
             top -= func->args - (func->ret_type ? 1 : 0);
             FIN_VM_NEXT();
@@ -136,8 +136,8 @@ void fin_vm_interpret(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
     FIN_VM_LOOP_END();
 }
 
-fin_vm* fin_vm_create(fin_ctx* ctx) {
-    fin_vm* vm = (fin_vm*)ctx->alloc(NULL, sizeof(fin_vm));
+fin_vm_t* fin_vm_create(fin_ctx_t* ctx) {
+    fin_vm_t* vm = (fin_vm_t*)ctx->alloc(NULL, sizeof(fin_vm_t));
     vm->stack.top   = vm->stack.stash;
     vm->stack.begin = vm->stack.stash;
     vm->stack.end   = vm->stack.stash + FIN_COUNT_OF(vm->stack.stash);
@@ -145,13 +145,13 @@ fin_vm* fin_vm_create(fin_ctx* ctx) {
     return vm;
 }
 
-void fin_vm_destroy(fin_vm* vm) {
+void fin_vm_destroy(fin_vm_t* vm) {
     vm->ctx->alloc(vm, 0);
 }
 
-inline void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) {
+inline void fin_vm_invoke_int(fin_ctx_t* ctx, fin_mod_func_t* func, fin_val_t* stack) {
     if (func->is_native) {
-        fin_val result;
+        fin_val_t result;
         (*func->func)(ctx, stack - func->args, &result);
         if (func->ret_type)
             stack[-func->args] = result;
@@ -160,7 +160,7 @@ inline void fin_vm_invoke_int(fin_ctx* ctx, fin_mod_func* func, fin_val* stack) 
         fin_vm_interpret(ctx, func, stack);
 }
 
-void fin_vm_invoke(fin_vm* vm, fin_mod_func* func) {
+void fin_vm_invoke(fin_vm_t* vm, fin_mod_func_t* func) {
     fin_vm_invoke_int(vm->ctx, func, vm->stack.top);
 }
 

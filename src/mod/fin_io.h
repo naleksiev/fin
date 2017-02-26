@@ -8,7 +8,7 @@
 
 #include <fin/fin.h>
 
-void fin_io_register(fin_ctx* ctx);
+void fin_io_register(fin_ctx_t* ctx);
 
 #endif //#ifndef FIN_MOD_IO_H
 

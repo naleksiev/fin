@@ -31,8 +31,8 @@ static void* fin_allocator(void* ptr, unsigned int size) {
     return NULL;
 }
 
-fin_ctx* fin_ctx_create(fin_alloc alloc) {
-    fin_ctx* ctx = (fin_ctx*)alloc(NULL, sizeof(fin_ctx));
+fin_ctx_t* fin_ctx_create(fin_alloc alloc) {
+    fin_ctx_t* ctx = (fin_ctx_t*)alloc(NULL, sizeof(fin_ctx_t));
     ctx->alloc = alloc;
     ctx->pool = fin_str_pool_create(alloc);
     ctx->mod = NULL;
@@ -43,14 +43,14 @@ fin_ctx* fin_ctx_create(fin_alloc alloc) {
     return ctx;
 }
 
-fin_ctx* fin_ctx_create_default() {
+fin_ctx_t* fin_ctx_create_default() {
     return fin_ctx_create(&fin_allocator);
 }
 
-void fin_ctx_destroy(fin_ctx* ctx) {
-    fin_mod* mod = ctx->mod;
+void fin_ctx_destroy(fin_ctx_t* ctx) {
+    fin_mod_t* mod = ctx->mod;
     while (mod) {
-        fin_mod* tmp = mod;
+        fin_mod_t* tmp = mod;
         mod = mod->next;
         fin_mod_destroy(ctx, tmp);
     }
@@ -59,16 +59,16 @@ void fin_ctx_destroy(fin_ctx* ctx) {
     ctx->alloc(ctx, 0);
 }
 
-void fin_ctx_eval_str(fin_ctx* ctx, const char* cstr) {
-    fin_mod* mod = fin_mod_compile(ctx, cstr);
+void fin_ctx_eval_str(fin_ctx_t* ctx, const char* cstr) {
+    fin_mod_t* mod = fin_mod_compile(ctx, cstr);
     if (mod && mod->entry) {
-        fin_vm* vm = fin_vm_create(ctx);
+        fin_vm_t* vm = fin_vm_create(ctx);
         fin_vm_invoke(vm, mod->entry);
         fin_vm_destroy(vm);
     }
 }
 
-void fin_ctx_eval_file(fin_ctx* ctx, const char* path) {
+void fin_ctx_eval_file(fin_ctx_t* ctx, const char* path) {
     FILE* fp = fopen(path, "rb");
     assert(fp);
 

@@ -8,12 +8,12 @@
 
 #include <fin/fin.h>
 
-typedef struct fin_vm       fin_vm;
-typedef struct fin_mod_func fin_mod_func;
+typedef struct fin_vm_t       fin_vm_t;
+typedef struct fin_mod_func_t fin_mod_func_t;
 
-fin_vm* fin_vm_create(fin_ctx* ctx);
-void    fin_vm_destroy(fin_vm* vm);
-void    fin_vm_invoke(fin_vm* vm, fin_mod_func* func);
+fin_vm_t* fin_vm_create(fin_ctx_t* ctx);
+void      fin_vm_destroy(fin_vm_t* vm);
+void      fin_vm_invoke(fin_vm_t* vm, fin_mod_func_t* func);
 
 #endif //#ifndef FIN_VM_H
 

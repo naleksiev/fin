@@ -8,20 +8,20 @@
 
 #include <fin/fin.h>
 
-typedef struct fin_mod fin_mod;
-typedef struct fin_str_pool fin_str_pool;
+typedef struct fin_mod_t      fin_mod_t;
+typedef struct fin_str_pool_t fin_str_pool_t;
 
-typedef struct fin_ctx {
-    fin_alloc     alloc;
-    fin_str_pool* pool;
-    fin_mod*      mod;
-} fin_ctx;
+typedef struct fin_ctx_t {
+    fin_alloc       alloc;
+    fin_str_pool_t* pool;
+    fin_mod_t*      mod;
+} fin_ctx_t;
 
-fin_ctx* fin_ctx_create(fin_alloc alloc);
-fin_ctx* fin_ctx_create_default();
-void     fin_ctx_destroy(fin_ctx* ctx);
-void     fin_ctx_eval_str(fin_ctx* ctx, const char* cstr);
-void     fin_ctx_eval_file(fin_ctx* ctx, const char* path);
+fin_ctx_t* fin_ctx_create(fin_alloc alloc);
+fin_ctx_t* fin_ctx_create_default();
+void       fin_ctx_destroy(fin_ctx_t* ctx);
+void       fin_ctx_eval_str(fin_ctx_t* ctx, const char* cstr);
+void       fin_ctx_eval_file(fin_ctx_t* ctx, const char* path);
 
 #endif //#ifndef FIN_CTX_H
 
