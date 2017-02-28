@@ -155,7 +155,9 @@ static fin_ast_expr_t* fin_ast_parse_unary_expr(fin_ctx_t* ctx, fin_lex_t* lex) 
 
     fin_ast_expr_t* expr = fin_ast_parse_unary_expr(ctx, lex);
     fin_ast_unary_expr_t* un_expr = (fin_ast_unary_expr_t*)ctx->alloc(NULL, sizeof(fin_ast_unary_expr_t));
-    *un_expr = (fin_ast_unary_expr_t){ .base = (fin_ast_expr_t){ .type = fin_ast_expr_type_unary }, .op = op, .expr = expr };
+    un_expr->base.type = fin_ast_expr_type_unary;
+    un_expr->op = op;
+    un_expr->expr = expr;
     return &un_expr->base;
 }
 
@@ -408,7 +410,11 @@ static fin_ast_stmt_t* fin_ast_parse_if_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
     if (fin_lex_match(lex, fin_lex_type_else))
         false_stmt = fin_ast_parse_stmt(ctx, lex);
     fin_ast_if_stmt_t* stmt = (fin_ast_if_stmt_t*)ctx->alloc(NULL, sizeof(fin_ast_if_stmt_t));
-    *stmt = (fin_ast_if_stmt_t){ .base = (fin_ast_stmt_t){ .type = fin_ast_stmt_type_if, .next = NULL }, .cond = cond, .true_stmt = true_stmt, .false_stmt = false_stmt };
+    stmt->base.type = fin_ast_stmt_type_if;
+    stmt->base.next = NULL;
+    stmt->cond = cond;
+    stmt->true_stmt = true_stmt;
+    stmt->false_stmt = false_stmt;
     return &stmt->base;
 }
 
@@ -419,7 +425,10 @@ static fin_ast_stmt_t* fin_ast_parse_while_stmt(fin_ctx_t* ctx, fin_lex_t* lex) 
     fin_ast_expect(lex, fin_lex_type_r_paren);
     fin_ast_stmt_t* stmt = fin_ast_parse_stmt(ctx, lex);
     fin_ast_while_stmt_t* while_stmt = (fin_ast_while_stmt_t*)ctx->alloc(NULL, sizeof(fin_ast_while_stmt_t));
-    *while_stmt = (fin_ast_while_stmt_t){ .base = (fin_ast_stmt_t){ .type = fin_ast_stmt_type_while, .next = NULL }, .cond = cond, .stmt = stmt };
+    while_stmt->base.type = fin_ast_stmt_type_while;
+    while_stmt->base.next = NULL;
+    while_stmt->cond = cond;
+    while_stmt->stmt = stmt;
     return &while_stmt->base;
 }
 
@@ -432,7 +441,10 @@ static fin_ast_stmt_t* fin_ast_parse_do_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
     fin_ast_expect(lex, fin_lex_type_r_paren);
     fin_ast_expect(lex, fin_lex_type_semicolon);
     fin_ast_do_stmt_t* do_stmt = (fin_ast_do_stmt_t*)ctx->alloc(NULL, sizeof(fin_ast_do_stmt_t));
-    *do_stmt = (fin_ast_do_stmt_t){ .base = (fin_ast_stmt_t){ .type = fin_ast_stmt_type_do, .next = NULL }, .cond = cond, .stmt = stmt };
+    do_stmt->base.type = fin_ast_stmt_type_do;
+    do_stmt->base.next = NULL;
+    do_stmt->cond = cond;
+    do_stmt->stmt = stmt;
     return &do_stmt->base;
 }
 
