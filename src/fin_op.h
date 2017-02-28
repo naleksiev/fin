@@ -16,6 +16,7 @@ typedef enum fin_op_t {
     fin_op_store_field,
     fin_op_call,
     fin_op_branch,
+    fin_op_branch_if,
     fin_op_branch_if_n,
     fin_op_return,
     fin_op_pop,

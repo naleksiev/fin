@@ -1,0 +1,12 @@
+void Main()
+{
+    int i=0;
+
+    do
+    {
+        io.WriteLine("{i}");
+        i = i + 1;
+    }
+    while (i < 3);
+}
+

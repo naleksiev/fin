@@ -603,6 +603,18 @@ static void fin_mod_compile_stmt(fin_ctx_t* ctx, fin_mod_compiler_t* cmp, fin_as
             *lbl_end++ = (offset >> 8) & 0xFF;
             break;
         }
+        case fin_ast_stmt_type_do: {
+            fin_ast_do_stmt_t* do_stmt = (fin_ast_do_stmt_t*)stmt;
+            uint8_t* lbl_loop = cmp->code.top;
+            FIN_LOG("lbl_%d:\n", (int32_t)(lbl_loop - cmp->code.begin));
+            fin_mod_compile_stmt(ctx, cmp, do_stmt->stmt);
+            fin_mod_compile_expr(ctx, cmp, do_stmt->cond);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch_if);
+            FIN_LOG("\tbr_if       lbl_%d\n", (int32_t)(lbl_loop - cmp->code.begin));
+            uint16_t offset = lbl_loop - cmp->code.top - 2;
+            fin_mod_code_emit_uint16(ctx, &cmp->code, offset);
+            break;
+        }
         case fin_ast_stmt_type_decl: {
             fin_ast_decl_stmt_t* decl_stmt = (fin_ast_decl_stmt_t*)stmt;
             assert(!fin_mod_resolve_local(cmp, decl_stmt->name));

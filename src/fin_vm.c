@@ -21,6 +21,7 @@
                                     &&fin_op_store_field,     \
                                     &&fin_op_call,            \
                                     &&fin_op_branch,          \
+                                    &&fin_op_branch_if,       \
                                     &&fin_op_branch_if_n,     \
                                     &&fin_op_return,          \
                                     &&fin_op_pop,             \
@@ -104,6 +105,15 @@ void fin_vm_interpret(fin_ctx_t* ctx, fin_mod_func_t* func, fin_val_t* stack) {
             int16_t offset = *ip++;
             offset |= *ip++ << 8;
             ip += offset;
+            FIN_VM_NEXT();
+        }
+        FIN_VM_OP(fin_op_branch_if) {
+            if ((--top)->b) {
+                int16_t offset = *ip++;
+                offset |= *ip++ << 8;
+                ip += offset;
+            } else
+                ip += 2;
             FIN_VM_NEXT();
         }
         FIN_VM_OP(fin_op_branch_if_n) {

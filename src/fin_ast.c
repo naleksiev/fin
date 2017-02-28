@@ -423,6 +423,19 @@ static fin_ast_stmt_t* fin_ast_parse_while_stmt(fin_ctx_t* ctx, fin_lex_t* lex) 
     return &while_stmt->base;
 }
 
+static fin_ast_stmt_t* fin_ast_parse_do_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
+    fin_ast_expect(lex, fin_lex_type_do);
+    fin_ast_stmt_t* stmt = fin_ast_parse_stmt(ctx, lex);
+    fin_ast_expect(lex, fin_lex_type_while);
+    fin_ast_expect(lex, fin_lex_type_l_paren);
+    fin_ast_expr_t* cond = fin_ast_parse_expr(ctx, lex, NULL);
+    fin_ast_expect(lex, fin_lex_type_r_paren);
+    fin_ast_expect(lex, fin_lex_type_semicolon);
+    fin_ast_do_stmt_t* do_stmt = (fin_ast_do_stmt_t*)ctx->alloc(NULL, sizeof(fin_ast_do_stmt_t));
+    *do_stmt = (fin_ast_do_stmt_t){ .base = (fin_ast_stmt_t){ .type = fin_ast_stmt_type_do, .next = NULL }, .cond = cond, .stmt = stmt };
+    return &do_stmt->base;
+}
+
 static fin_ast_stmt_t* fin_ast_parse_for_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
     return NULL;
 }
@@ -534,6 +547,8 @@ static fin_ast_stmt_t* fin_ast_parse_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
         //    return fin_ast_parse_switch_stmt(lex);
         case fin_lex_type_while:
             return fin_ast_parse_while_stmt(ctx, lex);
+        case fin_lex_type_do:
+            return fin_ast_parse_do_stmt(ctx, lex);
         case fin_lex_type_for:
             return fin_ast_parse_for_stmt(ctx, lex);
 //        case fin_lex_type_break:
@@ -794,6 +809,12 @@ static void fin_ast_stmt_destroy(fin_ast_module_t* mod, fin_ast_stmt_t* stmt) {
             fin_ast_while_stmt_t* while_stmt = (fin_ast_while_stmt_t*)stmt;
             fin_ast_expr_destroy(mod, while_stmt->cond);
             fin_ast_stmt_destroy(mod, while_stmt->stmt);
+            break;
+        }
+        case fin_ast_stmt_type_do: {
+            fin_ast_do_stmt_t* do_stmt = (fin_ast_do_stmt_t*)stmt;
+            fin_ast_expr_destroy(mod, do_stmt->cond);
+            fin_ast_stmt_destroy(mod, do_stmt->stmt);
             break;
         }
         case fin_ast_stmt_type_decl: {
