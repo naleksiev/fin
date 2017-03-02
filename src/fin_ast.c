@@ -865,6 +865,23 @@ static void fin_ast_func_destroy(fin_ast_module_t* mod, fin_ast_func_t* func) {
     mod->ctx->alloc(func, 0);
 }
 
+static void fin_ast_enum_val_destroy(fin_ast_module_t* mod, fin_ast_enum_val_t* val) {
+    if (!val)
+        return;
+    fin_ast_enum_val_destroy(mod, val->next);
+    fin_str_destroy(mod->ctx, val->name);
+    fin_ast_expr_destroy(mod, val->expr);
+    mod->ctx->alloc(val, 0);
+}
+static void fin_ast_enum_destroy(fin_ast_module_t* mod, fin_ast_enum_t* en) {
+    if (!en)
+        return;
+    fin_ast_enum_destroy(mod, en->next);
+    fin_str_destroy(mod->ctx, en->name);
+    fin_ast_enum_val_destroy(mod, en->values);
+    mod->ctx->alloc(en, 0);
+}
+
 static void fin_ast_field_destroy(fin_ast_module_t* mod, fin_ast_field_t* field) {
     if (!field)
         return;
@@ -885,6 +902,7 @@ static void fin_ast_type_destroy(fin_ast_module_t* mod, fin_ast_type_t* type) {
 
 void fin_ast_destroy(fin_ast_module_t* mod) {
     fin_ast_func_destroy(mod, mod->funcs);
+    fin_ast_enum_destroy(mod, mod->enums);
     fin_ast_type_destroy(mod, mod->types);
     fin_str_destroy(mod->ctx, mod->name);
     mod->ctx->alloc(mod, 0);
