@@ -406,7 +406,8 @@ static fin_ast_stmt_t* fin_ast_parse_if_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
     fin_ast_expect(lex, fin_lex_type_l_paren);
     fin_ast_expr_t* cond = fin_ast_parse_expr(ctx, lex, NULL);
     fin_ast_expect(lex, fin_lex_type_r_paren);
-    fin_ast_stmt_t* true_stmt = fin_ast_parse_stmt(ctx, lex); fin_ast_stmt_t* false_stmt = NULL;
+    fin_ast_stmt_t* true_stmt = fin_ast_parse_stmt(ctx, lex);
+    fin_ast_stmt_t* false_stmt = NULL;
     if (fin_lex_match(lex, fin_lex_type_else))
         false_stmt = fin_ast_parse_stmt(ctx, lex);
     fin_ast_if_stmt_t* stmt = (fin_ast_if_stmt_t*)ctx->alloc(NULL, sizeof(fin_ast_if_stmt_t));
