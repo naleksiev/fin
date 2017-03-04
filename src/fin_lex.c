@@ -12,6 +12,8 @@ static const struct {
     const char* cstr;
     fin_lex_type_t type;
 } fin_lex_keywords [] = {
+    { "true", fin_lex_type_bool },
+    { "false", fin_lex_type_bool },
     { "void", fin_lex_type_void },
     { "import", fin_lex_type_import },
     { "if", fin_lex_type_if },
@@ -306,8 +308,9 @@ fin_lex_type_t fin_lex_get_type(fin_lex_t* lex) {
 }
 
 bool fin_lex_consume_bool(fin_lex_t* lex) {
-    assert(0);
-    return false;
+    bool value = *lex->token.cstr == 't';
+    fin_lex_next(lex);
+    return value;
 }
 
 int64_t fin_lex_consume_int(fin_lex_t* lex) {

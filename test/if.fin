@@ -1,14 +1,14 @@
 void Main()
 {
-    if (1 == 1)
+    if (true)
         io.WriteLine("Success!");
 
-    if (1 == 1)
+    if (true)
         io.WriteLine("Success!");
     else
         io.WriteLine("Fail!");
 
-    if (1 == 2)
+    if (false)
         io.WriteLine("Fail!");
     else
         io.WriteLine("Success!");
