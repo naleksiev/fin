@@ -70,7 +70,8 @@ void fin_ctx_eval_str(fin_ctx_t* ctx, const char* cstr) {
 
 void fin_ctx_eval_file(fin_ctx_t* ctx, const char* path) {
     FILE* fp = fopen(path, "rb");
-    assert(fp);
+    if (!fp)
+        return;
 
     fseek(fp, 0, SEEK_END);
     int32_t file_size = (int32_t)ftell(fp);
