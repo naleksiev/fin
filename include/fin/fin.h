@@ -50,6 +50,7 @@ fin_str_t*  fin_str_create(fin_ctx_t* ctx, const char* str, int32_t len);
 void        fin_str_destroy(fin_ctx_t* ctx, fin_str_t* str);
 fin_str_t*  fin_str_clone(fin_str_t* str);
 fin_str_t*  fin_str_concat(fin_ctx_t* ctx, fin_str_t* a, fin_str_t* b);
+fin_str_t*  fin_str_join(fin_ctx_t* ctx, fin_str_t* arr, int32_t count);
 const char* fin_str_cstr(fin_str_t* str);
 int32_t     fin_str_len(fin_str_t* str);
 

@@ -150,6 +150,23 @@ fin_str_t* fin_str_concat(fin_ctx_t* ctx, fin_str_t* a, fin_str_t* b) {
     return result;
 }
 
+fin_str_t* fin_str_join(fin_ctx_t* ctx, fin_str_t* arr, int32_t count) {
+    int32_t length = 0;
+    for (int32_t i=0; i<count; i++)
+        length += fin_str_len(arr + i);
+    char* buffer = ctx->alloc(NULL, length + 1);
+    length = 0;
+    for (int32_t i=0; i<count; i++) {
+        if (!(arr+i))
+            continue;
+        strncpy(buffer, (arr+i)->cstr, (arr+i)->len);
+        length += (arr+i)->len;
+    }
+    fin_str_t* result = fin_str_create(ctx, buffer, length);
+    ctx->alloc(buffer, 0);
+    return result;
+}
+
 const char* fin_str_cstr(fin_str_t* str) {
     return str ? str->cstr : "";
 }
