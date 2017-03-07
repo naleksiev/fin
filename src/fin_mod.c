@@ -57,11 +57,11 @@ typedef struct fin_mod_compiler_t {
     uint8_t         scopes_count;
 } fin_mod_compiler_t;
 
-inline static void fin_mod_scope_begin(fin_mod_compiler_t* cmp) {
+static void fin_mod_scope_begin(fin_mod_compiler_t* cmp) {
     cmp->scopes[cmp->scopes_count++] = cmp->locals_count;
 }
 
-inline static void fin_mod_scope_end(fin_mod_compiler_t* cmp) {
+static void fin_mod_scope_end(fin_mod_compiler_t* cmp) {
     cmp->locals_count = cmp->scopes[--cmp->scopes_count];
 }
 
