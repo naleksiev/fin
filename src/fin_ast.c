@@ -816,6 +816,10 @@ static void fin_ast_stmt_destroy(fin_ast_module_t* mod, fin_ast_stmt_t* stmt) {
             break;
         }
         case fin_ast_stmt_type_if: {
+            fin_ast_if_stmt_t* if_stmt = (fin_ast_if_stmt_t*)stmt;
+            fin_ast_expr_destroy(mod, if_stmt->cond);
+            fin_ast_stmt_destroy(mod, if_stmt->true_stmt);
+            fin_ast_stmt_destroy(mod, if_stmt->false_stmt);
             break;
         }
         case fin_ast_stmt_type_while: {
