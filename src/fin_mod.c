@@ -53,6 +53,7 @@ typedef struct fin_mod_compiler_t {
     fin_mod_local_t locals[256];
     uint8_t         scopes[256];
     uint8_t         locals_count;
+    uint8_t         locals_max;
     uint8_t         params_count;
     uint8_t         scopes_count;
 } fin_mod_compiler_t;
@@ -62,6 +63,8 @@ static void fin_mod_scope_begin(fin_mod_compiler_t* cmp) {
 }
 
 static void fin_mod_scope_end(fin_mod_compiler_t* cmp) {
+    if (cmp->locals_max < cmp->locals_count)
+        cmp->locals_max = cmp->locals_count;
     cmp->locals_count = cmp->scopes[--cmp->scopes_count];
 }
 
@@ -677,6 +680,7 @@ static void fin_mod_compile_func(fin_mod_func_t* out_func, fin_ctx_t* ctx, fin_m
     cmp.mod = mod;
     cmp.func = func;
     cmp.locals_count = 0;
+    cmp.locals_max = 0;
     cmp.params_count = 0;
     cmp.scopes_count = 0;
     cmp.ret_type = fin_str_clone(out_func->ret_type);
@@ -699,7 +703,7 @@ static void fin_mod_compile_func(fin_mod_func_t* out_func, fin_ctx_t* ctx, fin_m
     out_func->code_length = (int32_t)(cmp.code.top - cmp.code.begin);
     out_func->code = (uint8_t*)ctx->alloc(NULL, out_func->code_length);
     memcpy(out_func->code, cmp.code.begin, out_func->code_length);
-    out_func->locals = cmp.locals_count - cmp.params_count;
+    out_func->locals = cmp.locals_max - cmp.params_count;
 
     fin_mod_code_reset(ctx, &cmp.code);
 
