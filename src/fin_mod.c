@@ -597,6 +597,10 @@ static void fin_mod_compile_stmt(fin_ctx_t* ctx, fin_mod_compiler_t* cmp, fin_as
             }
             break;
         }
+        case fin_ast_stmt_type_for: {
+            assert(0);
+            break;
+        }
         case fin_ast_stmt_type_while: {
             fin_ast_while_stmt_t* while_stmt = (fin_ast_while_stmt_t*)stmt;
             fin_mod_scope_begin(cmp);

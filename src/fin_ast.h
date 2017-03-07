@@ -162,6 +162,7 @@ typedef enum fin_ast_stmt_type_t {
     fin_ast_stmt_type_expr,
     fin_ast_stmt_type_ret,
     fin_ast_stmt_type_if,
+    fin_ast_stmt_type_for,
     fin_ast_stmt_type_while,
     fin_ast_stmt_type_do,
     fin_ast_stmt_type_decl,
@@ -189,6 +190,14 @@ typedef struct fin_ast_if_stmt_t {
     fin_ast_stmt_t* true_stmt;
     fin_ast_stmt_t* false_stmt;
 } fin_ast_if_stmt_t;
+
+typedef struct fin_ast_for_stmt_t {
+    fin_ast_stmt_t  base;
+    fin_ast_expr_t* init;
+    fin_ast_expr_t* cond;
+    fin_ast_expr_t* loop;
+    fin_ast_stmt_t* stmt;
+} fin_ast_for_stmt_t;
 
 typedef struct fin_ast_while_stmt_t {
     fin_ast_stmt_t  base;

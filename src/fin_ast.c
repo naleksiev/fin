@@ -419,6 +419,26 @@ static fin_ast_stmt_t* fin_ast_parse_if_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
     return &stmt->base;
 }
 
+static fin_ast_stmt_t* fin_ast_parse_for_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
+    fin_ast_expect(lex, fin_lex_type_for);
+    fin_ast_expect(lex, fin_lex_type_l_paren);
+    fin_ast_expr_t* init = fin_ast_parse_expr(ctx, lex, NULL);
+    fin_ast_expect(lex, fin_lex_type_semicolon);
+    fin_ast_expr_t* cond = fin_ast_parse_expr(ctx, lex, NULL);
+    fin_ast_expect(lex, fin_lex_type_semicolon);
+    fin_ast_expr_t* loop = fin_ast_parse_expr(ctx, lex, NULL);
+    fin_ast_expect(lex, fin_lex_type_r_paren);
+    fin_ast_stmt_t* stmt = fin_ast_parse_stmt(ctx, lex);
+    fin_ast_for_stmt_t* if_stmt = (fin_ast_for_stmt_t*)ctx->alloc(NULL, sizeof(fin_ast_for_stmt_t));
+    if_stmt->base.type = fin_ast_stmt_type_for;
+    if_stmt->base.next = NULL;
+    if_stmt->init = init;
+    if_stmt->cond = cond;
+    if_stmt->loop = loop;
+    if_stmt->stmt = stmt;
+    return &if_stmt->base;
+}
+
 static fin_ast_stmt_t* fin_ast_parse_while_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
     fin_ast_expect(lex, fin_lex_type_while);
     fin_ast_expect(lex, fin_lex_type_l_paren);
@@ -447,10 +467,6 @@ static fin_ast_stmt_t* fin_ast_parse_do_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
     do_stmt->cond = cond;
     do_stmt->stmt = stmt;
     return &do_stmt->base;
-}
-
-static fin_ast_stmt_t* fin_ast_parse_for_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
-    return NULL;
 }
 
 static fin_ast_stmt_t* fin_ast_parse_decl_stmt(fin_ctx_t* ctx, fin_lex_t* lex, fin_ast_type_ref_t* type) {
@@ -820,6 +836,14 @@ static void fin_ast_stmt_destroy(fin_ast_module_t* mod, fin_ast_stmt_t* stmt) {
             fin_ast_expr_destroy(mod, if_stmt->cond);
             fin_ast_stmt_destroy(mod, if_stmt->true_stmt);
             fin_ast_stmt_destroy(mod, if_stmt->false_stmt);
+            break;
+        }
+        case fin_ast_stmt_type_for: {
+            fin_ast_for_stmt_t* for_stmt = (fin_ast_for_stmt_t*)stmt;
+            fin_ast_expr_destroy(mod, for_stmt->init);
+            fin_ast_expr_destroy(mod, for_stmt->cond);
+            fin_ast_expr_destroy(mod, for_stmt->loop);
+            fin_ast_stmt_destroy(mod, for_stmt->stmt);
             break;
         }
         case fin_ast_stmt_type_while: {
