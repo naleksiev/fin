@@ -1,0 +1,12 @@
+void Main()
+{
+    {
+        string msg = "Hello";
+        io.Write("{msg}");
+    }
+    {
+        string msg = ", world!";
+        io.WriteLine("{msg}");
+    }
+}
+

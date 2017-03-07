@@ -51,9 +51,19 @@ typedef struct fin_mod_compiler_t {
     fin_str_t*      ret_type;
     fin_mod_code_t  code;
     fin_mod_local_t locals[256];
+    uint8_t         scopes[256];
     uint8_t         locals_count;
     uint8_t         params_count;
+    uint8_t         scopes_count;
 } fin_mod_compiler_t;
+
+inline static void fin_mod_scope_begin(fin_mod_compiler_t* cmp) {
+    cmp->scopes[cmp->scopes_count++] = cmp->locals_count;
+}
+
+inline static void fin_mod_scope_end(fin_mod_compiler_t* cmp) {
+    cmp->locals_count = cmp->scopes[--cmp->scopes_count];
+}
 
 static void fin_mod_code_init(fin_mod_code_t* code) {
     code->top   = code->storage;
@@ -636,8 +646,10 @@ static void fin_mod_compile_stmt(fin_ctx_t* ctx, fin_mod_compiler_t* cmp, fin_as
         }
         case fin_ast_stmt_type_block: {
             fin_ast_block_stmt_t* block_stmt = (fin_ast_block_stmt_t*)stmt;
+            fin_mod_scope_begin(cmp);
             for (fin_ast_stmt_t* s = block_stmt->stmts; s; s = s->next)
                 fin_mod_compile_stmt(ctx, cmp, s);
+            fin_mod_scope_end(cmp);
             break;
         }
     }
@@ -652,6 +664,7 @@ static void fin_mod_compile_func(fin_mod_func_t* out_func, fin_ctx_t* ctx, fin_m
     cmp.func = func;
     cmp.locals_count = 0;
     cmp.params_count = 0;
+    cmp.scopes_count = 0;
     cmp.ret_type = fin_str_clone(out_func->ret_type);
     fin_mod_code_init(&cmp.code);
 
