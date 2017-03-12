@@ -4,8 +4,9 @@
  */
 
 #include "fin_lex.h"
-#include <assert.h>
+#include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 static const struct {
@@ -70,6 +71,15 @@ static bool fin_lex_match_char(fin_lex_t* lex, char c) {
         return true;
     }
     return false;
+}
+
+static void fin_lex_error(fin_lex_t* lex, const char* format, ...) {
+    char message[256];
+    va_list args;
+    va_start(args, format);
+    vsprintf(message, format, args);
+    va_end(args);
+    printf("<file>:%d:%d error: %s\n", lex->line, 0, message);
 }
 
 static void fin_lex_skip_line_comment(fin_lex_t* lex) {
@@ -150,7 +160,7 @@ static fin_lex_token_t fin_lex_create_string_token(fin_lex_t* lex) {
             }
         }
     }
-    //fin_lex_create_error_token(lex, "Unterminated string.");
+    fin_lex_error(lex, "Unterminated string.");
     return fin_lex_create_token(lex, fin_lex_type_error);
 }
 
@@ -270,7 +280,7 @@ static fin_lex_token_t fin_lex_next_token(fin_lex_t* lex) {
                     return fin_lex_create_name_token(lex);
                 if (fin_lex_is_digit(c))
                     return fin_lex_create_number_token(lex);
-                //fin_lex_create_error_token(lex, "Unexpected character");
+                fin_lex_error(lex, "Unterminated character.");
                 return fin_lex_create_token(lex, fin_lex_type_error);
         }
     };
