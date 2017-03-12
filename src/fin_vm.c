@@ -8,6 +8,7 @@
 #include "fin_obj.h"
 #include "fin_op.h"
 #include "fin_mod.h"
+#include <assert.h>
 
 #if FIN_CONFIG_COMPUTED_GOTO
     #define FIN_VM_NEXT()       goto *goto_table[*ip++]
@@ -172,5 +173,6 @@ inline void fin_vm_invoke_int(fin_ctx_t* ctx, fin_mod_func_t* func, fin_val_t* s
 
 void fin_vm_invoke(fin_vm_t* vm, fin_mod_func_t* func) {
     fin_vm_invoke_int(vm->ctx, func, vm->stack.top);
+    assert(vm->stack.top == vm->stack.begin);
 }
 
