@@ -501,6 +501,8 @@ static fin_ast_stmt_t* fin_ast_parse_ret_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
 }
 
 static fin_ast_stmt_t* fin_ast_parse_expr_stmt(fin_ctx_t* ctx, fin_lex_t* lex, fin_ast_expr_t* expr) {
+    if (expr == NULL)
+        expr = fin_ast_parse_expr(ctx, lex, NULL);
     switch (fin_lex_get_type(lex)) {
         case fin_lex_type_eq:
         case fin_lex_type_plus_eq:
@@ -589,7 +591,7 @@ static fin_ast_stmt_t* fin_ast_parse_stmt(fin_ctx_t* ctx, fin_lex_t* lex) {
         case fin_lex_type_name:
             return fin_ast_parse_expr_or_decl_stmt(ctx, lex);
         default:
-            assert(0);
+            return fin_ast_parse_expr_stmt(ctx, lex, NULL);
     }
 }
 
