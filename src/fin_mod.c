@@ -601,7 +601,30 @@ static void fin_mod_compile_stmt(fin_ctx_t* ctx, fin_mod_compiler_t* cmp, fin_as
             break;
         }
         case fin_ast_stmt_type_for: {
-            assert(0);
+            fin_ast_for_stmt_t* for_stmt = (fin_ast_for_stmt_t*)stmt;
+            fin_mod_scope_begin(cmp);
+            fin_mod_compile_expr(ctx, cmp, for_stmt->init);
+            uint8_t* lbl_loop = cmp->code.top;
+            FIN_LOG("lbl_%d:\n", (int32_t)(lbl_loop - cmp->code.begin));
+            fin_mod_compile_expr(ctx, cmp, for_stmt->cond);
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch_if_n);
+            uint8_t* lbl_end = cmp->code.top;
+            fin_mod_code_emit_uint16(ctx, &cmp->code, 0);
+            FIN_LOG("\tbr_if_n     lbl_%d\n", (int32_t)(lbl_end - cmp->code.begin));
+            fin_mod_scope_begin(cmp);
+            fin_mod_compile_stmt(ctx, cmp, for_stmt->stmt);
+            fin_mod_scope_end(cmp);
+            fin_mod_compile_expr(ctx, cmp, for_stmt->loop);
+            uint16_t offset = lbl_loop - cmp->code.top - 3;
+            fin_mod_code_emit_uint8(ctx, &cmp->code, fin_op_branch);
+            fin_mod_code_emit_uint16(ctx, &cmp->code, offset);
+            FIN_LOG("\tbr          lbl_%d\n", (int32_t)(lbl_loop - cmp->code.begin));
+            FIN_LOG("lbl_%d:\n", (int32_t)(lbl_end - cmp->code.begin));
+            offset = cmp->code.top - lbl_end - 2;
+            offset = cmp->code.top - lbl_end - 2;
+            *lbl_end++ = offset & 0xFF;
+            *lbl_end++ = (offset >> 8) & 0xFF;
+            fin_mod_scope_end(cmp);
             break;
         }
         case fin_ast_stmt_type_while: {
