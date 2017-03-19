@@ -21,7 +21,7 @@ typedef enum fin_op_t {
     fin_op_return,
     fin_op_pop,
     fin_op_new,
-} fin_op_t_t;
+} fin_op_t;
 
 #endif //#ifndef FIN_OP_H
 
