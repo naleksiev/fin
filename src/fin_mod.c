@@ -621,7 +621,6 @@ static void fin_mod_compile_stmt(fin_ctx_t* ctx, fin_mod_compiler_t* cmp, fin_as
             FIN_LOG("\tbr          lbl_%d\n", (int32_t)(lbl_loop - cmp->code.begin));
             FIN_LOG("lbl_%d:\n", (int32_t)(lbl_end - cmp->code.begin));
             offset = cmp->code.top - lbl_end - 2;
-            offset = cmp->code.top - lbl_end - 2;
             *lbl_end++ = offset & 0xFF;
             *lbl_end++ = (offset >> 8) & 0xFF;
             fin_mod_scope_end(cmp);
