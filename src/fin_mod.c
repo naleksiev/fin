@@ -949,4 +949,3 @@ void fin_mod_destroy(fin_ctx_t* ctx, fin_mod_t* mod) {
         ctx->alloc(mod->types, 0);
     ctx->alloc(mod, 0);
 }
-

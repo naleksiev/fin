@@ -11,4 +11,3 @@
 void fin_time_register(fin_ctx_t* ctx);
 
 #endif //#ifndef FIN_MOD_TIME_H
-

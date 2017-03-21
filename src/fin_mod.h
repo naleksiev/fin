@@ -55,4 +55,3 @@ fin_mod_t* fin_mod_compile(fin_ctx_t* ctx, const char* cstr);
 void       fin_mod_destroy(fin_ctx_t* ctx, fin_mod_t* mod);
 
 #endif //#ifndef FIN_MOD_H
-

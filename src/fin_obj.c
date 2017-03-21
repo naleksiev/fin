@@ -26,4 +26,3 @@ void fin_obj_destroy(fin_alloc alloc, fin_obj_t* obj) {
     if (obj)
         alloc(obj, 0);
 }
-

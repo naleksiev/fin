@@ -13,4 +13,3 @@ int main(int argc, const char* argv[]) {
         fin_ctx_eval_file(ctx, argv[1]);
     fin_ctx_destroy(ctx);
 }
-

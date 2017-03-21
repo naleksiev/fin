@@ -35,4 +35,3 @@ void fin_io_register(fin_ctx_t* ctx) {
 
     fin_mod_create(ctx, "io", descs, FIN_COUNT_OF(descs));
 }
-

@@ -18,4 +18,3 @@ void       fin_obj_inc_ref(fin_obj_t* obj);
 void       fin_obj_dec_ref(fin_alloc alloc, fin_obj_t* obj);
 
 #endif //#ifndef FIN_OBJ_H
-

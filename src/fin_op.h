@@ -24,4 +24,3 @@ typedef enum fin_op_t {
 } fin_op_t;
 
 #endif //#ifndef FIN_OP_H
-

@@ -938,4 +938,3 @@ void fin_ast_destroy(fin_ast_module_t* mod) {
     fin_str_destroy(mod->ctx, mod->name);
     mod->ctx->alloc(mod, 0);
 }
-

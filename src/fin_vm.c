@@ -175,4 +175,3 @@ void fin_vm_invoke(fin_vm_t* vm, fin_mod_func_t* func) {
     fin_vm_invoke_int(vm->ctx, func, vm->stack.top);
     assert(vm->stack.top == vm->stack.begin);
 }
-

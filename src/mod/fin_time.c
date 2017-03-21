@@ -18,4 +18,3 @@ void fin_time_register(fin_ctx_t* ctx) {
 
     fin_mod_create(ctx, "time", descs, FIN_COUNT_OF(descs));
 }
-

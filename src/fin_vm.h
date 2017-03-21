@@ -16,4 +16,3 @@ void      fin_vm_destroy(fin_vm_t* vm);
 void      fin_vm_invoke(fin_vm_t* vm, fin_mod_func_t* func);
 
 #endif //#ifndef FIN_VM_H
-

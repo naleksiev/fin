@@ -356,4 +356,3 @@ void fin_lex_consume_name_to(fin_lex_t* lex, char* buffer) {
     buffer[lex->token.len] = '\0';
     fin_lex_next(lex);
 }
-

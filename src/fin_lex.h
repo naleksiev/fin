@@ -100,4 +100,3 @@ fin_lex_str_t  fin_lex_consume_name(fin_lex_t* lex);
 void           fin_lex_consume_name_to(fin_lex_t* lex, char* buffer);
 
 #endif //#ifndef FIN_LEX_H
-

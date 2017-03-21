@@ -24,4 +24,3 @@ void       fin_ctx_eval_str(fin_ctx_t* ctx, const char* cstr);
 void       fin_ctx_eval_file(fin_ctx_t* ctx, const char* path);
 
 #endif //#ifndef FIN_CTX_H
-

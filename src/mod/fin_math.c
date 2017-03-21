@@ -74,4 +74,3 @@ void fin_math_register(fin_ctx_t* ctx) {
 
     fin_mod_create(ctx, "math", descs, FIN_COUNT_OF(descs));
 }
-

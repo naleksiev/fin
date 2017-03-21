@@ -174,4 +174,3 @@ const char* fin_str_cstr(fin_str_t* str) {
 int32_t fin_str_len(fin_str_t* str) {
     return str ? str->len : 0;
 }
-
