@@ -1,16 +1,9 @@
 void Main()
 {
-/*
-    for (int i=0; i<5; i=i+1)
-    {
-        io.WriteLine("{i}");
-    }
-*/
     int i = 0;
-    for (i; i<5; i)
+    for (i; i<5; i=i+1)
     {
         io.WriteLine("{i}");
-        i = i + 1;
     }
 }
 
