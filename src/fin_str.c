@@ -5,9 +5,7 @@
 
 #include "fin_str.h"
 #include "fin_ctx.h"
-#include <assert.h>
 #include <string.h>
-#include <stdio.h>
 
 typedef struct fin_str_t {
     int32_t ref;
@@ -119,7 +117,6 @@ fin_str_t* fin_str_create(fin_ctx_t* ctx, const char* cstr, int32_t len) {
     fin_str_t* str = (fin_str_t*)pool->alloc(NULL, sizeof(fin_str_t) + len);
     str->ref = 1;
     str->len = len;
-    assert(len);
     strncpy(str->cstr, cstr, len);
     str->cstr[len] = '\0';
     fin_str_insert(pool, hash, str);
