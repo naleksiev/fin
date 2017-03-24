@@ -151,7 +151,7 @@ fin_vm_t* fin_vm_create(fin_ctx_t* ctx) {
     fin_vm_t* vm = (fin_vm_t*)ctx->alloc(NULL, sizeof(fin_vm_t));
     vm->stack.top   = vm->stack.storage;
     vm->stack.begin = vm->stack.storage;
-    vm->stack.end   = vm->stack.storage + fin_vm_stack_storage;
+    vm->stack.end   = vm->stack.storage + FIN_COUNT_OF(vm->stack.storage);
     vm->ctx = ctx;
     return vm;
 }
