@@ -40,11 +40,13 @@
     #define FIN_VM_OP(op)       case op:
 #endif
 
+static const uint32_t fin_vm_stack_storage = 64;
+
 typedef struct fin_vm_stack_t {
     fin_val_t* top;
     fin_val_t* begin;
     fin_val_t* end;
-    fin_val_t  stash[64];
+    fin_val_t  storage[fin_vm_stack_storage];
 } fin_vm_stack_t;
 
 typedef struct fin_vm_t {
@@ -149,9 +151,9 @@ void fin_vm_interpret(fin_ctx_t* ctx, fin_mod_func_t* func, fin_val_t* stack) {
 
 fin_vm_t* fin_vm_create(fin_ctx_t* ctx) {
     fin_vm_t* vm = (fin_vm_t*)ctx->alloc(NULL, sizeof(fin_vm_t));
-    vm->stack.top   = vm->stack.stash;
-    vm->stack.begin = vm->stack.stash;
-    vm->stack.end   = vm->stack.stash + FIN_COUNT_OF(vm->stack.stash);
+    vm->stack.top   = vm->stack.storage;
+    vm->stack.begin = vm->stack.storage;
+    vm->stack.end   = vm->stack.storage + fin_vm_stack_storage;
     vm->ctx = ctx;
     return vm;
 }
