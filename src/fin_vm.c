@@ -40,13 +40,11 @@
     #define FIN_VM_OP(op)       case op:
 #endif
 
-static const uint32_t fin_vm_stack_storage = 64;
-
 typedef struct fin_vm_stack_t {
     fin_val_t* top;
     fin_val_t* begin;
     fin_val_t* end;
-    fin_val_t  storage[fin_vm_stack_storage];
+    fin_val_t  storage[64];
 } fin_vm_stack_t;
 
 typedef struct fin_vm_t {
